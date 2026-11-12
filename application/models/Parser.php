@@ -1,0 +1,1839 @@
+<?php
+require_once APPPATH . "/third_party/ctools.php";
+//ini_set('memory_limit', '2048M');
+class Parser extends CI_Model
+{
+	public function __construct()
+	{
+	}
+
+	public function get_segments()
+	{
+		$this->db->select('*');
+		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
+		$this->db->where('status', '1');
+		$this->db->order_by("id", "DESC");
+		$query = $this->db->get('segment');
+		return $query->result();
+	}
+
+	public function give_num_fac()
+	{
+		$i = 1;
+		$trouve = 1;
+		$code = date('y-md') . $i;
+		$this->db->where('nofacture', $code);
+		// $this->db->where('awbl_type', 'import');
+		$query = $this->db->get('tbl_facture');
+
+		while ($query->num_rows()) {
+			$i++;
+			$code = date('y-md') . $i;
+			$this->db->where('nofacture', $code);
+			// $this->db->where('awbl_type', 'import');
+			$query = $this->db->get('tbl_facture');
+		}
+
+		return $code;
+	}
+
+	public function give_num_pmt()
+	{
+		$i = 1;
+		$trouve = 1;
+		$code = date('Y-md') . $i;
+		$this->db->where('nopaiement', $code);
+		$query = $this->db->get('tbl_facture');
+
+		while ($query->num_rows()) {
+			$i++;
+			$code = date('Y-md') . $i;
+			$this->db->where('nopaiement', $code);
+			// $this->db->where('awbl_type', 'import');
+			$query = $this->db->get('tbl_facture');
+		}
+
+		return $code;
+	}
+
+	public function add_numRapport()
+	{
+		$reponse = 0;
+		//Recherche de date
+		$this->db->where('daterapport', date('Y-m-d'));
+		$query = $this->db->get('norapport');
+
+		if ($query->num_rows() > 0) {
+			$reponse = 1;
+		} else {
+
+			$i = 1;
+			$trouve = 1;
+
+			$code = 10000;
+			$this->db->order_by('id', 'DESC');
+			$query_r = $this->db->get('norapport', '1');
+
+			foreach ($query_r->result() as $row) {
+				$code = intval($row->num);
+			}
+			$code++;
+			$this->db->where('num', $code);
+			$query = $this->db->get('norapport');
+
+			while ($query->num_rows()) {
+				$this->db->where('num', $code);
+				$query = $this->db->get('norapport');
+				$code++;
+			}
+
+			$data2 = array(
+				'status' => '0'
+			);
+
+			$this->db->update('norapport', $data2);
+
+			$data = array(
+				'id' => null,
+				'daterapport' => date('Y-m-d'),
+				'num' => $code
+			);
+
+			$this->db->insert('norapport', $data);
+		}
+		return $reponse;
+	}
+
+	public function give_num_livraison()
+	{
+		$i = 1;
+		$trouve = 1;
+		$code = 'OK' . date('y-md') . $i;
+		$this->db->where('nolivraison', $code);
+		$query = $this->db->get('buil');
+
+		while ($query->num_rows()) {
+			$i++;
+			$code = 'OK' . date('y-md') . $i;
+			$this->db->where('nolivraison', $code);
+			$query = $this->db->get('buil');
+		}
+
+		return $code;
+	}
+	public function verify($id)
+	{
+		$this->db->where('custum', $id);
+		$query = $this->db->get('segment');
+
+		if ($query->num_rows() > 0) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	public function verify_awbl2($id)
+	{
+		$this->db->where('nobuil', $id);
+		$query = $this->db->get('degroupage');
+
+		if ($query->num_rows() > 0) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	public function set($data)
+	{
+		$sql = $this->db->insert_string('segment', $data);
+		return $this->db->query($sql);
+	}
+	public function verify_awbl($id)
+	{
+		$this->db->where('awbl', $id);
+		$query = $this->db->get('buil');
+
+		if ($query->num_rows() > 0) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	public function set_addawbl($data)
+	{
+		$datapmt[] = array(
+			'idtx'				=> date('YmdHis'),
+			'codetx'			=> 'FAC',
+			'date'				=> date('y-m-d'),
+			'description'		=> 'Redevance informatiques',
+			'apayer'			=> '5',
+			'monnaie_apayer' 	=> 'USD',
+			'payer'				=> '0',
+			'taux'				=> '',
+			'encaisse'			=> '',
+			'monnaie'			=> '',
+			'nofacture'			=> date('YmdHis') . valeur_n_chiffres(5, 0),
+			'nopaiement'		=> '',
+			'status'			=> '1',
+			'awbl_type'    => "import",
+			'norapport'			=> $this->session->numrapport,
+			'awbl'				=> $data['awbl']
+		);
+		$this->db->insert_batch('tbl_facture', $datapmt);
+		$sql = $this->db->insert_string('buil', $data);
+		return $this->db->query($sql);
+	}
+	public function set_addawbl_exp($data)
+	{
+		$datapmt[] = array(
+			'idtx'				=> date('YmdHis'),
+			'codetx'			=> 'FAC',
+			'date'				=> date('y-m-d'),
+			'description'		=> 'Default_export',
+			'apayer'			=> '1',
+			'monnaie_apayer' 	=> 'USD',
+			'payer'				=> '1',
+			'taux'				=> '',
+			'encaisse'			=> '',
+			'monnaie'			=> '',
+			'nofacture'			=> date('YmdHis') . valeur_n_chiffres(5, 0),
+			'nopaiement'		=> '',
+			'status'			=> '1',
+			'awbl_type'    => "export",
+			'norapport'			=> $this->session->numrapport,
+			'awbl'				=> $data['awbl']
+		);
+		$this->db->insert_batch('tbl_facture', $datapmt);
+		$sql = $this->db->insert_string('buil', $data);
+		return $this->db->query($sql);
+	}
+	public function set_addawbl_mesdhasa($data)
+	{
+		$datapmt[] = array(
+			'idtx'				=> date('YmdHis'),
+			'codetx'			=> 'FAC',
+			'date'				=> date('y-m-d'),
+			'description'		=> 'Default_export',
+			'apayer'			=> '1',
+			'monnaie_apayer' 	=> 'USD',
+			'payer'				=> '1',
+			'taux'				=> '',
+			'encaisse'			=> '',
+			'monnaie'			=> '',
+			'nofacture'			=> date('YmdHis') . valeur_n_chiffres(5, 0),
+			'nopaiement'		=> '',
+			'status'			=> '1',
+			'awbl_type'    => "MESDHASA2",
+			'norapport'			=> $this->session->numrapport,
+			'awbl'				=> $data['awbl']
+		);
+		$this->db->insert_batch('tbl_facture', $datapmt);
+		$sql = $this->db->insert_string('buil', $data);
+		return $this->db->query($sql);
+	}
+	public function setBuilSegment($segment, $datasegment, $buil, $databuil, $id)
+	{
+		$is_set = false;
+		//begin transaction
+		$this->db->trans_begin();
+
+		// insert in table segment
+		$this->db->where('id', $id);
+		$this->db->update($segment, $datasegment);
+
+
+		for ($i = 0; $i < count($databuil['awbl']); $i++) {
+
+			$code = $databuil['notify_code'][$i];
+			$name = $databuil['notify_name'][$i];
+			$address = $databuil['notify_adress'][$i];
+			if (empty($databuil['notify_code'][$i])) {
+				$code = NULL;
+			}
+			if (empty($databuil['notify_name'][$i])) {
+				$name = NULL;
+			}
+			if (empty($databuil['notify_adress'][$i])) {
+				$address = NULL;
+			}
+
+
+
+			$datapointage[] = array(
+				'awbl'		=> $databuil['awbl'][$i],
+				'pointerle'	=> date('y-m-d'),
+				'xmlle'		=> date('y-m-d'),
+				'status'	=> '0'
+			);
+			//=====================
+
+			if ($this->verify_awbl($databuil['awbl'][$i]) == true) {
+				$data[] = array(
+					// 'duplicate'=>'*',
+					'awbl' => $databuil['awbl'][$i],
+					'consignee' => $databuil['consignee'][$i],
+					'currency' => $databuil['currency'][$i],
+					'freight' => $databuil['freight'][$i],
+					'notify_adress' => $address,
+					'notify_code' => $code,
+					'notify_name' => $name,
+					'package' => $databuil['package'][$i],
+					'segmentid' => $id,
+					'qty' => $databuil['qty'][$i],
+					'qtytotal' => $databuil['qtytotal'][$i],
+					'typeawbl' => 'import',
+					'weight' => $databuil['weight'][$i]
+				);
+
+				// $datapmt[]=array(
+				// 'idtx'				=>date('YmdHis').$i,
+				// 'codetx'			=>'FAC',
+				// 'date'				=>date('y-m-d'),
+				// 'description'		=>'Redevance informatiques',
+				// 'apayer'			=>'',
+				// 'monnaie_apayer' 	=>'USD',
+				// 'payer'				=>'0',
+				// 'taux'				=>'',
+				// 'encaisse'			=>'',
+				// 'monnaie'			=>'',
+				// 'awbl_type'    => "import",
+				// 'nofacture'			=>date('YmdHis').valeur_n_chiffres($i,5),
+				// 'nopaiement'		=>'',
+				// 'status'			=>'1',
+				// 'norapport'			=>$this->session->numrapport,
+				// 'awbl'				=>$databuil['awbl'][$i]
+				// );
+			} else {
+				$data[] = array(
+					'awbl' => $databuil['awbl'][$i],
+					'consignee' => $databuil['consignee'][$i],
+					'currency' => $databuil['currency'][$i],
+					'freight' => $databuil['freight'][$i],
+					'notify_adress' => $address,
+					'notify_code' => $code,
+					'notify_name' => $name,
+					'package' => $databuil['package'][$i],
+					'segmentid' => $id,
+					'qty' => $databuil['qty'][$i],
+					'qtytotal' => $databuil['qtytotal'][$i],
+					'typeawbl' => 'import',
+					'weight' => $databuil['weight'][$i]
+
+				);
+				$datapmt[] = array(
+					'idtx'				=> date('YmdHis') . $i,
+					'codetx'			=> 'FAC',
+					'date'				=> date('y-m-d'),
+					'description'		=> 'Redevance informatiques',
+					'apayer'			=> '5',
+					'monnaie_apayer' 	=> 'USD',
+					'payer'				=> '0',
+					'taux'				=> '',
+					'encaisse'			=> '',
+					'monnaie'			=> '',
+					'nofacture'			=> date('YmdHis') . valeur_n_chiffres($i, 5),
+					'nopaiement'		=> '',
+					'awbl_type'    => "import",
+					'status'			=> '1',
+					'norapport'			=> $this->session->numrapport,
+					'awbl'				=> $databuil['awbl'][$i]
+				);
+			}
+
+
+
+			//================
+		}
+		// 	 echo "<pre>";
+		// print_r($data);
+		//    echo "</pre>";
+		//insert in table buil
+		$this->db->insert_batch('buil', $data);
+
+		if (count($datapmt) > 0) {
+			$this->db->insert_batch('tbl_facture', $datapmt);
+		}
+		// $insert = array();
+		// foreach ($data as $elem) {
+		//  $insert[] = implode(',', array_values($elem));
+		// }
+		// $sql = 'INSERT INTO buils (`awbl`, `consignee`, `currency`, `freight`, `notify_adress`, `notify_code`, `notify_name`, `package`, `qty`, `qtytotal`, `segmentid`, `typeawbl`, `weight`)  VALUES (' . implode ('), (', $insert) . ');';
+		// 	$query = $this->db->query($sql);
+
+		//$this->db->update_batch('tbl_pointage',$datapointage,'awbl');
+
+
+
+
+		if ($this->db->trans_status() === FALSE) {
+			$this->db->trans_rollback();
+			$is_set = false;
+		} else {
+			$this->db->trans_commit();
+			$is_set = true;
+		}
+		return $is_set;
+	}
+	public function verify_awbl_data($i)
+	{
+		$this->db->where('awbl', $i);
+		$query = $this->db->get('buil');
+		if ($query->num_rows() > 0) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	public function get_Pointage()
+	{
+		$this->db->where('status', '0');
+		$query = $this->db->get('tbl_pointage');
+		return $query->result();
+	}
+	public function get_currency()
+	{
+		$query = $this->db->get('currency');
+		return $query->result();
+	}
+	public function set_Pointage($data)
+	{
+		$sql = $this->db->insert_string('tbl_pointage', $data);
+		return $this->db->query($sql);
+	}
+	public function get_awbl($flight)
+	{
+		$this->db->select('*, buil.id as idbuil');
+		$this->db->from('buil');
+		$this->db->join('segment', 'buil.segmentid = segment.id', 'inner');
+		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
+		$this->db->where('buil.segmentid', $flight);
+		$this->db->where('buil.typeawbl', 'import');
+		$query = $this->db->get();
+		return $query->result();
+	}
+
+	public function get_awbl_delete($flight)
+	{
+		// $this->db->join('buil', 'buil.awbl=tbl_facture.awbl','inner');
+		// $this->db->where('buil.segmentid', $flight);
+		// $this->db->where('buil.typeawbl', 'import');
+		// $query = $this->db->get('tbl_facture');
+		// // return $query;
+		// return $query->result();
+		$this->db->join('segment', 'buil.segmentid = segment.id', 'inner');
+		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
+		$this->db->join('tbl_facture', 'tbl_facture.awbl=buil.awbl', 'inner');
+		$this->db->where('buil.segmentid', $flight);
+		$this->db->where('buil.typeawbl', 'import');
+		$query = $this->db->delete('buil');
+		return $query;
+	}
+	public function get_awbl_delete2($flight)
+	{
+
+		$this->db->select('*');
+		$this->db->from('tbl_factures');
+		$this->db->join('buil', 'tbl_facture.awbl=buil.awbl', 'inner');
+		$this->db->where('buil.segmentid', $flight);
+		$this->db->where('buil.typeawbl', 'import');
+		$query = $this->db->get('tbl_factures');
+		// return $query;
+		return $query->result();
+	}
+	public function get_awbl_notif($id)
+	{
+		$this->db->where('id', $id);
+		$query = $this->db->get('buil');
+		return $query->result();
+	}
+
+	public function add_memo($data, $id)
+	{
+		$this->db->where('id', $id);
+		$query = $this->db->update('buil', $data);
+		return $query;
+	}
+	public function delete_vol($flight)
+	{
+		$this->db->where('id', $flight);
+		$query = $this->db->delete('segment');
+		return $query;
+	}
+	public function recherche_vol($flight)
+	{
+		$this->db->select('');
+		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
+		$this->db->like('Voyage_number', $flight);
+		$this->db->order_by("Date_of_arrival", "ASC");
+		$query = $this->db->get('segment');
+		return $query->result();
+	}
+	public function get_droitt_depot($awbl)
+	{
+
+		$this->db->select('historique_caisse.monnaie,historique_caisse.montant_hc,historique_caisse.montant_hc1,
+					segment.Date_of_arrival,buil.datenotification,compaganie.droitdepot,buil.datelivre,
+					buil.weight,compaganie.prix_lbs,historique_caisse.awb,historique_caisse.date_hc,segment.Place_of_departure_code,buil.consignee,buil.prepaid,buil.collect,buil.nocharge,buil.remarque2,compaganie.compagnie,buil.qty,tbl_facture.rabais,tbl_facture.nofacture');
+		$this->db->from('historique_caisse');
+		$this->db->where('historique_caisse.description', 'Storage Fees');
+		$this->db->where('tbl_facture.description', 'Storage Fees');
+		$this->db->where('tbl_facture.awbl_type', 'import');
+		$this->db->where('historique_caisse.awbl_type', 'import');
+		$this->db->where('shot', '0');
+		$this->db->join('buil', 'buil.awbl = historique_caisse.awb', 'inner');
+		$this->db->join('segment', 'segment.id=buil.segmentid', 'inner');
+		$this->db->join('tbl_facture', 'tbl_facture.awbl=buil.awbl', 'inner');
+		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
+		$this->db->like('awb', $awbl);
+		$query = $this->db->get();
+		return $query->result();
+	}
+	public function get_factures_payer($date1, $date2)
+	{
+		$this->db->select('*, sum(apayer), sum(payer), sum(rabais), (sum(apayer) - sum(payer)-sum(rabais)) as balance,tbl_facture.nofacture, tbl_facture.date');
+		// $this->db->from('tbl_facture');
+		$this->db->join('tbl_client', 'tbl_client.codeclient = tbl_facture.codeclient', 'inner');
+		$this->db->join('buil', 'buil.awbl = tbl_facture.awbl', 'inner');
+		$this->db->join('segment', 'segment.id=buil.segmentid', 'inner');
+		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
+		$this->db->where('awbl_type', 'import');
+		$where = "DATE(tbl_facture.date) BETWEEN " . "'" . $date1 . "'" . " AND " . "'" . $date2 . "'";
+		$this->db->group_by('nofacture');
+		$this->db->having('(sum(apayer) - sum(payer) -sum(rabais))=', '0');
+		$this->db->order_by('date', 'ASC');
+
+		$query = $this->db->where($where)->get('tbl_facture');
+		return $query->result();
+	}
+
+	public function recherche_depot_date($date1, $date2)
+	{
+
+		$this->db->select('historique_caisse.monnaie,historique_caisse.montant_hc,historique_caisse.montant_hc1,
+					segment.Date_of_arrival,buil.datenotification,compaganie.droitdepot,buil.datelivre,
+					buil.weight,compaganie.prix_lbs,historique_caisse.awb,historique_caisse.date_hc,segment.Place_of_departure_code,buil.consignee,buil.prepaid,buil.collect,buil.nocharge');
+		$this->db->join('buil', 'buil.awbl = historique_caisse.awb', 'inner');
+		$this->db->join('segment', 'segment.id=buil.segmentid', 'inner');
+		$this->db->join('tbl_facture', 'tbl_facture.awbl=buil.awbl', 'inner');
+		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
+		$where = "DATE(date_hc) BETWEEN " . "'" . $date1 . "'" . " AND " . "'" . $date2 . "'";
+		$this->db->where('historique_caisse.description', 'Storage Fees');
+		$this->db->where('tbl_facture.description', 'Storage Fees');
+		$this->db->where('tbl_facture.awbl_type', 'import');
+		$this->db->where('historique_caisse.awbl_type', 'import');
+		$this->db->where('shot', '0');
+		$query = $this->db->where($where)->get('historique_caisse');
+		return $query->result();
+	}
+	public function get_lesdroitt_depot()
+	{
+		$this->db->select('*,');
+		$this->db->from('tbl_facture');
+		$this->db->join('tbl_client', 'tbl_client.codeclient = tbl_facture.codeclient', 'inner');
+		$this->db->join('buil', 'buil.awbl = tbl_facture.awbl', 'inner');
+		$this->db->where('awbl_type', 'import');
+		$this->db->join('segment', 'segment.id=buil.segmentid', 'inner');
+		$this->db->where('datenotification !=', '0000-00-00');
+		// $this->db->where('datenotification IS NOT NULL');
+		// $this->db->order_by("id", "DESC");
+		// $this->db->like('awbl');
+		$query = $this->db->get();
+		return $query->result();
+	}
+
+
+
+	public function recherche_vol_date($date1, $date2)
+	{
+		$this->db->select('');
+		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
+		$this->db->order_by("Date_of_arrival", "ASC");
+		$where = "DATE(Date_of_arrival) BETWEEN " . "'" . $date1 . "'" . " AND " . "'" . $date2 . "'";
+		$query = $this->db->where($where)->get('segment');
+		return $query->result();
+	}
+
+	public function recherche_details_de_caisse($date1, $date2)
+	{
+		$sql = "SELECT hc.awb, nr.num,sg.Date_of_arrival,sg.idcompagnie,sg.Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
+					 FROM norapport as nr
+					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
+					 INNER JOIN buil as b ON (b.awbl=hc.awb)
+					 INNER JOIN segment as sg ON (sg.id = b.segmentid)
+					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
+					 where nr.daterapport BETWEEN '$date1' AND '$date2' and b.shot = 0  and b.typeawbl='import'";
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	public function recherche_details_de_caisse2($date1, $date2)
+	{
+		$sql = "SELECT hc.awb, nr.num,mn.date as Date_of_arrival,mn.flight as Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
+					 FROM norapport as nr
+					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
+					 INNER JOIN awbl as b ON (b.awb_number=hc.awb)
+					 INNER JOIN manifeste as mn ON (mn.id_manifeste=b.id_manifeste)
+					 INNER JOIN compaganie as cp ON (cp.idcompagnie =mn.idcompagnie)
+					 INNER JOIN buil as b2 ON (b2.awbl=hc.awb)
+					 where nr.daterapport BETWEEN '$date1' AND '$date2' and b2.shot = 0  and b2.typeawbl='export'";
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	public function recherche_informatics_fees($date1, $date2)
+	{
+		$sql = "SELECT hc.awb, nr.num,sg.Date_of_arrival,sg.idcompagnie,sg.Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
+					 FROM norapport as nr
+					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
+					 INNER JOIN buil as b ON (b.awbl=hc.awb)
+					 INNER JOIN segment as sg ON (sg.id = b.segmentid)
+					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
+					 where nr.daterapport BETWEEN '$date1' AND '$date2' and b.shot = 0 and sg.Voyage_number and hc.description='Redevance informatiques' ";
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+
+	public function recherche_import_fees($date1, $date2)
+	{
+		$sql = "SELECT hc.awb, nr.num,sg.Date_of_arrival,sg.idcompagnie,sg.Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
+					 FROM norapport as nr
+					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
+					 INNER JOIN buil as b ON (b.awbl=hc.awb)
+					 INNER JOIN segment as sg ON (sg.id = b.segmentid)
+					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
+					 where nr.daterapport BETWEEN '$date1' AND '$date2' and b.shot = 0 and hc.description='Airport Fees'";
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	public function recherche_freight($date1, $date2)
+	{
+		$sql = "SELECT hc.awb, nr.num,hc.monnaie,hc.description, hc.montant_hc,b.prepaid,b.collect,b.nocharge, SUM(hc.montant_hc) AS totalF
+					 FROM historique_caisse as hc
+					 INNER JOIN norapport as nr ON (nr.num=hc.norapport )
+					 INNER JOIN buil as b ON (b.awbl=hc.awb)
+					 where nr.daterapport BETWEEN '$date1' AND '$date2' and b.shot = 0 and (hc.description='Freight' or hc.description='Other charges due carrier' or hc.description='Weight charge ') GROUP BY hc.awb, hc.monnaie";
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	public function recherche_import_fees2($date1, $date2, $currency)
+	{
+		$sql = "SELECT hc.awb, nr.num,sg.Date_of_arrival,sg.idcompagnie,sg.Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
+					 FROM norapport as nr
+					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
+					 INNER JOIN buil as b ON (b.awbl=hc.awb)
+					 INNER JOIN segment as sg ON (sg.id = b.segmentid)
+					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
+					 where nr.daterapport BETWEEN '$date1' AND '$date2' and b.shot = 0 and hc.description='Airport Fees' and hc.monnaie='$currency' ";
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	public function recherche_freight2($date1, $date2, $currency)
+	{
+		$sql = "SELECT hc.awb, nr.num,hc.monnaie,hc.description, hc.montant_hc
+					 FROM norapport as nr
+					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
+					 INNER JOIN buil as b ON (b.awbl=hc.awb)
+					 where nr.daterapport BETWEEN '$date1' AND '$date2' and b.shot = 0 and hc.description='Freight' or hc.description='Other charges due carrier' or hc.description='Weight charge ' and hc.monnaie='$currency' ";
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	public function recherche_due_agent($date1, $date2, $compagnie)
+	{
+		$sql = "SELECT hc.awb, nr.num,mn.date as Date_of_arrival,mn.flight as Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
+					 FROM norapport as nr
+					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
+					 INNER JOIN awbl as b ON (b.awb_number=hc.awb)
+					 INNER JOIN manifeste as mn ON (mn.id_manifeste=b.id_manifeste)
+					 INNER JOIN compaganie as cp ON (cp.idcompagnie =mn.idcompagnie)
+					 INNER JOIN buil as b2 ON (b2.awbl=hc.awb)
+					 where nr.daterapport BETWEEN '$date1' AND '$date2' and b2.shot = 0  and b2.typeawbl='export' and cp.idcompagnie='$compagnie' and hc.description='Other charges due agent' ORDER BY b.awb_number ASC ";
+		$query = $this->db->query($sql);
+		return $query->result();
+		// $sql = "SELECT hc.awb, nr.num,sg.Date_of_arrival,sg.idcompagnie,sg.Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
+		//  FROM norapport as nr
+		//  INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
+		//  INNER JOIN buil as b ON (b.awbl=hc.awb)
+		//  INNER JOIN segment as sg ON (sg.id = b.segmentid)
+		//  INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
+		//  where nr.daterapport BETWEEN '$date1' AND '$date2' and b.shot = 0 and cp.idcompagnie='$compagnie' and hc.description='Other charges due agent'";
+		// $query = $this->db->query($sql);
+		// return $query->result();
+	}
+	public function RecherDueAgent($date1, $date2)
+	{
+		$sql = "SELECT b.awb_number, mn.date, b.destination, nr.num, b.chcg, b.name_agent, hc.monnaie,hc.montant_hc,cp.compagnie,hc.description
+					 FROM norapport as nr
+					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
+					 INNER JOIN awbl as b ON (b.awb_number=hc.awb)
+					 INNER JOIN manifeste as mn ON (mn.id_manifeste=b.id_manifeste)
+					 INNER JOIN compaganie as cp ON (cp.idcompagnie =mn.idcompagnie)
+					 INNER JOIN buil as b2 ON (b2.awbl=hc.awb)
+					 where nr.daterapport BETWEEN '$date1' AND '$date2' and b2.shot = 0  and b2.typeawbl='export'  and hc.description='Other charges due agent' ORDER BY b.awb_number ASC ";
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	public function recherche_statistics_weight($date1, $date2, $type)
+	{
+		$sql = "SELECT sg.Date_of_arrival,cp.compagnie,sg.idcompagnie,sg.Voyage_number,sg.Registration_number_of_transport_code,sg.Place_of_departure_code,sum(b.weight) as totalp
+					 FROM segment as sg
+					 INNER JOIN buil as b ON (b.segmentid=sg.id)
+					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
+					 where sg.Date_of_arrival BETWEEN '$date1' AND '$date2' and b.shot = 0 and b.typeawbl='$type' GROUP BY sg.id";
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	public function recherche_statistics_weight_export($date1, $date2, $type)
+	{
+		$sql = "SELECT mf.date,cp.compagnie,mf.idcompagnie,mf.flight,mf.country_loading,sum(b.total_weight_charge) as totalp
+					 FROM manifeste as mf
+					 INNER JOIN awbl as b ON (b.id_manifeste=mf.idcompagnie)
+					 INNER JOIN compaganie as cp ON (cp.idcompagnie = mf.idcompagnie)
+					 where mf.date BETWEEN '$date1' AND '$date2' and mf.vol_fermer = 1 and mf.type_manifeste='$type' GROUP BY mf.id_manifeste";
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	public function recherche_due_agent2($date1, $date2, $currency, $comp)
+	{
+		$sql = "SELECT hc.awb, nr.num,mn.date as Date_of_arrival,mn.flight as Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
+					 FROM norapport as nr
+					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
+					 INNER JOIN awbl as b ON (b.awb_number=hc.awb)
+					 INNER JOIN manifeste as mn ON (mn.id_manifeste=b.id_manifeste)
+					 INNER JOIN compaganie as cp ON (cp.idcompagnie =mn.idcompagnie)
+					 INNER JOIN buil as b2 ON (b2.awbl=hc.awb)
+					 where nr.daterapport BETWEEN '$date1' AND '$date2' and b2.shot = 0  and b2.typeawbl='export' and cp.idcompagnie='$comp' and hc.description='Other charges due agent' and hc.monnaie='$currency' ORDER BY b.awb_number ASC";
+		$query = $this->db->query($sql);
+		return $query->result();
+		// $sql = "SELECT hc.awb, nr.num,sg.Date_of_arrival,sg.idcompagnie,sg.Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
+		//  FROM norapport as nr
+		//  INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
+		//  INNER JOIN buil as b ON (b.awbl=hc.awb)
+		//  INNER JOIN segment as sg ON (sg.id = b.segmentid)
+		//  INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
+		//  where nr.daterapport BETWEEN '$date1' AND '$date2' and b.shot = 0 and cp.idcompagnie='$comp' and hc.description='Other charges due agent' and hc.monnaie='$currency'";
+		// $query = $this->db->query($sql);
+		// return $query->result();
+	}
+	public function details_de_caisse_item_comp($date1, $date2, $comp)
+	{
+		$sql = "SELECT SUM(hc.montant_hc) as total
+					FROM norapport as nr
+			 	 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
+			 	 INNER JOIN buil as b ON (b.awbl=hc.awb)
+			 	 INNER JOIN segment as sg ON (sg.id = b.segmentid)
+			 	 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
+			 	 where nr.daterapport BETWEEN '$date1' AND '$date2' and b.shot = 0 AND cp.compagnie='$comp' and hc.description='Airport Fees' and hc.monnaie='USD' ";
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	public function recherche_weekly1($date1, $date2, $type)
+	{
+		$sql = "SELECT sg.Date_of_arrival,hc.date_hc,cp.compagnie,b.awbl,b.typeawbl,b.collect,b.freight,b.remarque2
+					 FROM buil as b
+					 INNER JOIN segment as sg ON (sg.id = b.segmentid)
+					 INNER JOIN historique_caisse as hc ON (hc.awb = b.awbl)
+					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
+					 where hc.date_hc BETWEEN '$date1' AND '$date2' and b.shot = 0 and b.collect= 1 and b.typeawbl='$type' and hc.description='Freight' GROUP BY b.awbl ORDER BY b.awbl";
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	public function recherche_weekly2($date1, $date2, $type)
+	{
+		$sql = "SELECT b.awbl,b.datecreated,b.remarque,fr.description,SUM(fr.apayer) as total
+					 FROM buil as b
+					 INNER JOIN tbl_facture as fr ON (fr.awbl = b.awbl)
+					 where b.datecreated BETWEEN '$date1' AND '$date2' and b.shot = 0 and b.prepaid= 1 and b.typeawbl='$type' and (fr.description LIKE'%due carrier%' or fr.description LIKE '%Weight charge%') GROUP BY b.awbl  ORDER BY b.awbl ";
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	public function recherche_commission_weight1($date1, $date2, $type)
+	{
+		$sql = "SELECT sg.Date_of_arrival,sg.Place_of_departure_code,cp.compagnie,b.awbl,b.typeawbl,b.weight_charge,b.remarque2
+					 FROM buil as b
+					 INNER JOIN segment as sg ON (sg.id = b.segmentid)
+					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
+					 where sg.Date_of_arrival BETWEEN '$date1' AND '$date2' and b.shot = 0  and b.typeawbl='$type' GROUP BY b.awbl ORDER BY b.awbl,sg.Date_of_arrival ";
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	public function recherche_commission_weight2($date1, $date2)
+	{
+		// 	$sql = "SELECT b.awb_number,b.datecreated,b.route_to2,b.route_to3,b.wt_val,oh.description,oh.amount,ba.remarque
+		// 	 FROM awbl as b
+		// 	 INNER JOIN tbl_other_charges as oh ON (oh.id_other = b.awb_number)
+		// 	 INNER JOIN buil as ba ON (ba.awbl = b.awb_number)
+		// 	 where b.datecreated BETWEEN '$date1' AND '$date2' and b.void = 0  and (oh.description='DUE AGENT' or oh.description='due agent') GROUP BY b.awb_number  ORDER BY b.awb_number";
+		// 	$query = $this->db->query($sql);
+		// 	return $query->result();
+		$sql = "SELECT manifeste.date,awbl.remarque2,awbl.route_to1,awbl.awb_number,awbl.id_manifeste,awbl.id_awbl,awbl.void,awbl.qty,warehouse.nature_and_quantity,
+				warehouse.gross_weight,awbl.name_shipper,awbl.name_consignee,awbl.total_freight,awbl.rate_Charge,SUM((warehouse_colis.no_pieces*warehouse_colis.dim1*warehouse_colis.dim2*warehouse_colis.dim3)/366) as totalvolum,awbl.currency
+			FROM awbl
+			
+			INNER JOIN warehouse ON (warehouse.no_awbl = awbl.awb_number) 
+			INNER JOIN warehouse_colis ON (warehouse.no_warehouse = warehouse_colis.id_warehouse) 
+			INNER JOIN manifeste ON (manifeste.id_manifeste = awbl.	id_manifeste) 
+			where manifeste.date BETWEEN '$date1' AND '$date2' and awbl.void = 0  
+			GROUP BY awbl.awb_number
+			ORDER BY awbl.awb_number ASC";
+
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	public function recherche_commission_fees1($date1, $date2, $type)
+	{
+		$sql = "SELECT sg.Date_of_arrival,sg.Voyage_number,sg.Registration_number_of_transport_code,cp.compagnie,sg.id
+					 FROM segment as sg
+					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
+					 where sg.Date_of_arrival BETWEEN '$date1' AND '$date2' and sg.typesegment='$type' ORDER BY sg.Date_of_arrival";
+
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	public function recherche_vol2($flight)
+	{
+		$this->db->select('');
+		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
+		$this->db->like('Voyage_number', $flight);
+		$this->db->order_by("Date_of_arrival", "ASC");
+		$this->db->or_like('custum', $flight);
+		$query = $this->db->get('segment');
+		return $query->result();
+	}
+	public function set_prepaidcollect($id, $pp, $cl, $nc)
+	{
+		$data = array(
+			'prepaid' 	=> $pp,
+			'collect' 	=> $cl,
+			'nocharge'	=> $nc
+		);
+
+		$this->db->where('awbl', $id);
+		$this->db->update('buil', $data);
+		return 0;
+	}
+	public function awbl_none()
+	{
+		$this->db->where('prepaid', '0');
+		$this->db->where('collect', '0');
+		$this->db->where('nocharge', '0');
+		$this->db->where('typeawbl', 'import');
+		$this->db->where('shot', '0');
+		$this->db->where('nolivraison', '--');
+
+		$query = $this->db->get('buil');
+
+		return $query->num_rows();
+	}
+
+	public function awbl_pp()
+	{
+		$this->db->where('prepaid', '1');
+		$this->db->where('collect', '0');
+		$this->db->where('nocharge', '0');
+		$this->db->where('nolivraison', '--');
+		$this->db->where('typeawbl', 'import');
+		$this->db->where('shot', '0');
+		$query = $this->db->get('buil');
+
+		return $query->num_rows();
+	}
+
+	public function awbl_cc()
+	{
+		$this->db->where('prepaid', '0');
+		$this->db->where('collect', '1');
+		$this->db->where('nocharge', '0');
+		$this->db->where('nolivraison', '--');
+		$this->db->where('typeawbl', 'import');
+		$this->db->where('shot', '0');
+		$query = $this->db->get('buil');
+
+		return $query->num_rows();
+	}
+
+	public function awbl_nc()
+	{
+		$this->db->where('prepaid', '0');
+		$this->db->where('collect', '0');
+		$this->db->where('nocharge', '1');
+		$this->db->where('nolivraison', '--');
+		$this->db->where('typeawbl', 'import');
+		$this->db->where('shot', '0');
+
+		$query = $this->db->get('buil');
+
+		return $query->num_rows();
+	}
+	public function awbl_nonlivre()
+	{
+		$this->db->where('nolivraison', '--');
+		$this->db->where('typeawbl', 'import');
+		$this->db->where('shot', '0');
+		$query = $this->db->get('buil');
+
+		return $query->num_rows();
+	}
+	public function awbl_retard()
+	{
+		$this->db->where('nolivraison', '--');
+		$this->db->where('DATEDIFF(NOW(), datenotification) > ', 'Storage Fees');
+		$this->db->where('shot', '0');
+		$this->db->where('typeawbl', 'import');
+		$query = $this->db->get('buil');
+
+		return $query->num_rows();
+	}
+	public function awbl_type($type)
+	{
+		$this->db->where('nolivraison', '--');
+		$this->db->where('typeawbl', $type);
+		$this->db->where('shot', '0');
+		$query = $this->db->get('buil');
+
+		return $query->num_rows();
+	}
+	public function awbl_type2($type)
+	{
+		$this->db->where('nolivraison', 'OK-export');
+		$this->db->where('typeawbl', $type);
+		$query = $this->db->get('buil');
+
+		return $query->num_rows();
+	}
+	public function get_allclient()
+	{
+		$this->db->order_by("reference", "ASC");
+		$this->db->where('codeclient !=', 'cash');
+		$this->db->where('codeclient !=', 'MISC');
+		$query = $this->db->get('tbl_client');
+		return $query->result();
+	}
+	public function get_all_anniv()
+	{
+
+		$sql = " SELECT et.codeclient, et.date_naissance, et.email, et.societe, (DATEDIFF(now(), CONCAT(year(now()),'-',month(et.date_naissance),'-', day(et.date_naissance)))) as bd FROM tbl_client as et HAVING DATEDIFF(now(), CONCAT(year(now()),'-',month(et.date_naissance),'-', day(et.date_naissance)))  =0 ";
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	public function get_allcompagnie()
+	{
+		$this->db->order_by("compagnie", "ASC");
+		$query = $this->db->get('compaganie');
+		return $query->result();
+	}
+
+	public function add_compagnie($data)
+	{
+		$query = $this->db->insert('compaganie', $data);
+		return $query;
+	}
+	public function add_currency($data)
+	{
+		$query = $this->db->insert('currency', $data);
+		return $query;
+	}
+	public function add_charges_codes($data)
+	{
+		$query = $this->db->insert('tbl_charges_codes', $data);
+		return $query;
+	}
+	public function add_commodity($data)
+	{
+		$query = $this->db->insert('tbl_commodity', $data);
+		return $query;
+	}
+	public function get_allfrais()
+	{
+		$this->db->order_by("description", "ASC");
+		$query = $this->db->get('tbl_frais');
+		return $query->result();
+	}
+	public function get_charges_codes()
+	{
+		$this->db->order_by("charges_codes", "ASC");
+		$query = $this->db->get('tbl_charges_codes');
+		return $query->result();
+	}
+	public function get_commodity()
+	{
+		$this->db->order_by("commodity", "ASC");
+		$query = $this->db->get('tbl_commodity');
+		return $query->result();
+	}
+	public function get_taux()
+	{
+		$query = $this->db->get('taux');
+		return $query->result();
+	}
+
+	public function add_frais($data)
+	{
+		$query = $this->db->insert('tbl_frais', $data);
+		return $query;
+	}
+	public function get_awblFacture($cle)
+	{
+		$this->db->where('awbl', $cle);
+		$this->db->or_like('consignee', $cle);
+		$query = $this->db->get('buil');
+		return $query->result();
+	}
+	public function get_Un_awbl($cle, $cle2)
+	{
+		$this->db->select('*');
+		// $this->db->join('segment', 'buil.segmentid = warehouse_colis.id','inner');
+		$this->db->join('segment', 'buil.segmentid = segment.id', 'inner');
+		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
+		// $this->db->join('compaganie', 'compaganie.idcompagnie = segment.id_warehouse','inner');
+		$this->db->where('buil.awbl', $cle);
+		$this->db->where('buil.segmentid', $cle2);
+		$query = $this->db->get('buil');
+		return $query->result();
+	}
+	public function get_Un_awbl_export($cle, $cle2)
+	{
+		$this->db->select('*');
+		// $this->db->join('segment', 'buil.segmentid = warehouse_colis.id','inner');
+		// $this->db->join('segment', 'buil.segmentid = segment.id','inner');
+		$this->db->join('compaganie', 'compaganie.idcompagnie = buil.segmentid', 'inner');
+		// $this->db->join('compaganie', 'compaganie.idcompagnie = segment.id_warehouse','inner');
+		$this->db->where('buil.awbl', $cle);
+		$this->db->where('buil.segmentid', $cle2);
+		$query = $this->db->get('buil');
+		return $query->result();
+	}
+	public function get_Un_awbl_exp($cle, $cle2)
+	{
+		$this->db->select('*');
+		// $this->db->join('segment', 'buil.segmentid = segment.id','inner');
+		$this->db->join('compaganie', 'compaganie.idcompagnie = buil.segmentid', 'inner');
+		$this->db->where('buil.awbl', $cle);
+		$this->db->where('buil.segmentid', $cle2);
+		$query = $this->db->get('buil');
+		return $query->result();
+	}
+	public function get_Un_awbl_detail($cle)
+	{
+		$this->db->select('*');
+		$this->db->join('segment', 'buil.segmentid = segment.id', 'inner');
+		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
+		$this->db->where('buil.awbl', $cle);
+		$query = $this->db->get('buil');
+		return $query->result();
+	}
+	public function get_a_segment($id)
+	{
+		$this->db->select('*');
+		$this->db->where('id', $id);
+		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
+		$query = $this->db->get('segment');
+		return $query->result();
+	}
+	public function set_a_segment($id, $data)
+	{
+		$this->db->where('id', $id);
+		$this->db->update('segment', $data);
+		return true;
+	}
+	public function set_a_degroupage($id, $data)
+	{
+		$this->db->where('iddeg', $id);
+		$this->db->update('degroupage', $data);
+		return true;
+	}
+	public function set_a_degroupage2($buil, $data2)
+	{
+		$this->db->where('awbl', $buil);
+		$this->db->update('tbl_facture', $data2);
+		return true;
+	}
+	public function set_a_degroupage3($buil, $data3)
+	{
+		$this->db->where('awb', $buil);
+		$this->db->update('historique_caisse', $data3);
+		return true;
+	}
+	public function supprimerPointage($id)
+	{
+		$this->db->where('id', $id);
+		$this->db->delete('tbl_pointage');
+		return true;
+	}
+
+	public function get_paiement_awbl($id)
+	{
+		$this->db->where('awbl', $id);
+		$this->db->where('codetx !=', 'PMT');
+		$this->db->where('apayer !=', 0);
+		$this->db->where('awbl_type', 'import');
+		$query = $this->db->get('tbl_facture');
+		return $query->result();
+	}
+	public function get_noRapport_pmt($id)
+	{
+		$this->db->where('awbl', $id);
+		$this->db->where('codetx ', 'PMT');
+		$this->db->where('awbl_type', 'import');
+		$query = $this->db->get('tbl_facture');
+		return $query->result();
+	}
+	public function get_paiement_awbl_exp($id)
+	{
+		$this->db->where('awbl', $id);
+		$this->db->where('codetx !=', 'PMT');
+		$this->db->where('apayer !=', 0);
+		// $this->db->where('awbl_type', 'export');
+		$query = $this->db->get('tbl_facture');
+		return $query->result();
+	}
+	public function get_noRapport_pmt_exp($id)
+	{
+		$this->db->where('awbl', $id);
+		$this->db->where('codetx ', 'PMT');
+		$query = $this->db->get('tbl_facture');
+		return $query->result();
+	}
+	public function get_paiement_awbl_mesdhasa($id)
+	{
+		$this->db->where('awbl', $id);
+		$this->db->where('codetx !=', 'PMT');
+		$this->db->where('apayer !=', 0);
+		$this->db->where('awbl_type', 'MESDHASA2');
+		$query = $this->db->get('tbl_facture');
+		return $query->result();
+	}
+	public function get_noRapport_pmt_mesdhasa($id)
+	{
+		$this->db->where('awbl', $id);
+		$this->db->where('codetx ', 'PMT');
+		$this->db->where('awbl_type', 'MESDHASA2');
+		$query = $this->db->get('tbl_facture');
+		return $query->result();
+	}
+	public function get_paiement_awbl_detail($id)
+	{
+		$this->db->where('awbl', $id);
+		$this->db->where('awbl_type', 'import');
+		$query = $this->db->get('tbl_facture');
+		return $query->result();
+	}
+	public function get_paiement_awbl_detail_histo($id)
+	{
+		$this->db->where('awb', $id);
+		$this->db->where('awbl_type', 'import');
+		$query = $this->db->get('historique_caisse');
+		return $query->result();
+	}
+	public function get_paiement_awbl_detail_ex($id)
+	{
+		$this->db->where('awbl', $id);
+		$this->db->where('awbl_type', 'export');
+		$query = $this->db->get('tbl_facture');
+		return $query->result();
+	}
+	public function get_paiement_awbl_or_fac($id)
+	{
+		$this->db->select('*');
+		$this->db->from('tbl_facture');
+		$this->db->join('tbl_client', 'tbl_client.codeclient = tbl_facture.codeclient', 'inner');
+		// $this->db->join('historique_caisse', 'historique_caisse.awb = tbl_facture.awbl','inner');
+		// $this->db->where('apayer !=',0);
+		// $this->db->where('awbl_type', 'import');
+		$this->db->where('nofacture', $id);
+		$query = $this->db->get();
+		return $query->result();
+	}
+	public function get_paiement_all($id)
+	{
+
+		$this->db->select('*, sum(apayer), sum(payer), sum(rabais), (sum(apayer) - sum(payer)-sum(rabais)) as balance,tbl_facture.nofacture, tbl_facture.date');
+		$this->db->join('tbl_client', 'tbl_client.codeclient = tbl_facture.codeclient', 'inner');
+		$this->db->join('buil', 'buil.awbl = tbl_facture.awbl', 'inner');
+		// $this->db->join('segment', 'segment.id=buil.segmentid','inner');
+		// $this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie','inner');
+		// $this->db->where('awbl_type', 'import');
+		$where = "tbl_facture.codeclient=" . "'" . $id . "'";
+		$this->db->group_by('nofacture');
+		$this->db->having('(sum(apayer) - sum(payer) -sum(rabais))>', '0');
+		$this->db->order_by('date', 'ASC');
+
+		$query = $this->db->where($where)->get('tbl_facture');
+		return $query->result();
+	}
+	public function get_paiement_awbl_or_fac_degroup($id)
+	{
+		$this->db->select('*');
+		$this->db->from('tbl_facture');
+		$this->db->join('tbl_client', 'tbl_client.codeclient = tbl_facture.codeclient', 'inner');
+		// $this->db->join('historique_caisse', 'historique_caisse.awb = tbl_facture.awbl','inner');
+		// $this->db->where('apayer !=',0);
+		$this->db->where('awbl_type', 'import');
+		$this->db->where('awbl', $id);
+		$query = $this->db->get();
+		return $query->result();
+	}
+	public function get_frais()
+	{
+		$this->db->where('status', '1');
+		$query = $this->db->get('tbl_frais');
+		return $query->result();
+	}
+	public function get_paiement_effectue($id)
+	{
+		$this->db->where('nofacture', $id);
+		// $this->db->where('awbl_type', 'import');
+		$query = $this->db->get('historique_caisse');
+		return $query->result();
+	}
+	public function get_paiement_recu_histo($id)
+	{
+		$this->db->where('nopaiement', $id);
+		$query = $this->db->get('historique_caisse');
+		// $this->db->where('awbl_type', 'import');
+		return $query->result();
+	}
+
+	public function get_paiement_recu_histo2($id)
+	{
+
+		$this->db->like('nopaiement', $id);
+		$this->db->not_like('description', 'CCA#');
+		$query = $this->db->get('historique_caisse');
+		// $this->db->where('awbl_type', 'import');
+		return $query->result();
+	}
+
+	public function set_paiement_awbl($data)
+	{
+		$query = $this->db->insert('tbl_facture', $data);
+		return $query;
+	}
+	public function set_paiement_awbl_degroup($data3)
+	{
+		$query = $this->db->insert('historique_caisse', $data3);
+		return $query;
+	}
+	public function set_buil_awbl_degroup($data4)
+	{
+		$query = $this->db->insert('buil', $data4);
+		return $query;
+	}
+	public function set_paiement_awbl2($data2)
+	{
+		$query = $this->db->insert_batch('historique_caisse', $data2);
+		return $query;
+	}
+	public function awb_degroup($id)
+	{
+		$this->db->where('nobuil', $id);
+		$query = $this->db->get('degroupage');
+		return $query->result();
+	}
+	public function set_degroupage($data)
+	{
+		$query = $this->db->insert('degroupage', $data);
+		return $query;
+	}
+	public function get_degroupage($id)
+	{
+		$this->db->where('idbuil', $id);
+		$query = $this->db->get('degroupage');
+		return $query->result();
+	}
+	public function del_degroupage($id)
+	{
+		$this->db->where('iddeg', $id);
+		$query = $this->db->delete('degroupage');
+		return $query;
+	}
+	public function del_degroupage1($id)
+	{
+		$this->db->where('awbl', $id);
+		$query = $this->db->delete('tbl_facture');
+		return $query;
+	}
+	public function del_degroupage2($id)
+	{
+		$this->db->where('awbl', $id);
+		$query = $this->db->delete('buil');
+		return $query;
+	}
+	public function del_degroupage3($id)
+	{
+		$this->db->where('awb', $id);
+		$query = $this->db->delete('historique_caisse');
+		return $query;
+	}
+	public function get_client($codeclient)
+	{
+		$this->db->select('*');
+		$this->db->where('codeclient', $codeclient);
+		$query = $this->db->get('tbl_client');
+		return $query->result();
+	}
+
+	public function get_client_client()
+	{
+		$this->db->where('status', '1');
+		$this->db->order_by("societe", "ASC");
+		$query = $this->db->get('tbl_client');
+		return $query->result();
+	}
+
+	public function set_a_client($codeclient, $data)
+	{
+		$this->db->where('codeclient', $codeclient);
+		$this->db->update('tbl_client', $data);
+		return true;
+	}
+	public function deletePaiement($id)
+	{
+		$this->db->where('idtx', $id);
+		$this->db->where('description !=', 'Redevance informatiques');
+		$query = $this->db->delete('tbl_facture');
+		return $query;
+	}
+	public function deleteFacture_detail1($id)
+	{
+		$this->db->where('nopaiement', $id);
+		$query = $this->db->delete('tbl_facture');
+		return $query;
+	}
+	public function deleteFacture_detail2($id)
+	{
+		$this->db->where('nopaiement', $id);
+		$query = $this->db->delete('historique_caisse');
+		return $query;
+	}
+	public function valider_facture($id, $data)
+	{
+		$this->db->where('awbl', $id);
+		$query = $this->db->update('tbl_facture', $data);
+		return $query;
+	}
+
+	public function update_buill($id, $data, $segmentid)
+	{
+		$this->db->where('awbl', $id);
+		$this->db->where('segmentid', $segmentid);
+		$query = $this->db->update('buil', $data);
+		return $query;
+	}
+
+	public function update_num_client($id, $data)
+	{
+		$this->db->where('awbl', $id);
+		$this->db->where('awbl_type', 'import');
+		$query = $this->db->update('tbl_facture', $data);
+		return $query;
+	}
+
+	public function get_facture($id)
+	{
+		$this->db->select('*,sum(apayer) as mt');
+		$this->db->from('tbl_facture');
+		$this->db->join('tbl_client', 'tbl_client.codeclient = tbl_facture.codeclient', 'inner');
+		$this->db->join('buil', 'buil.awbl = tbl_facture.awbl', 'inner');
+		$this->db->join('segment', 'segment.id=buil.segmentid', 'inner');
+		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
+		$this->db->where('tbl_facture.nofacture', $id);
+		$this->db->where('tbl_facture.status', '1');
+		$this->db->where('awbl_type', 'import');
+		$this->db->group_by('tbl_facture.awbl');
+		$query = $this->db->get();
+		return $query->result();
+	}
+
+	public function add_client($data)
+	{
+		$query = $this->db->insert('tbl_client', $data);
+		return $query;
+	}
+
+	public function get_noRapport()
+	{
+		$this->db->where('status', '1');
+		$query = $this->db->get('norapport');
+		return $query->result();
+	}
+
+	public function get_compagnie()
+	{
+		$this->db->where('statut', '1');
+		$query = $this->db->get('compaganie');
+		return $query->result();
+	}
+	public function get_norapport2()
+	{
+		$query = $this->db->get('norapport');
+		return $query->result();
+	}
+	public function get_norapport3($date)
+	{
+		$this->db->where('daterapport', $date);
+		$query = $this->db->get('norapport');
+
+		return $query->result();
+	}
+	public function get_lentreprise($id)
+	{
+		$this->db->where('idcompagnie', $id);
+		$query = $this->db->get('compaganie');
+		return $query->result();
+	}
+	public function get_awbcomp($id)
+	{
+		$this->db->where('id_compagnie', $id);
+		$this->db->where('statut', '0');
+		$this->db->order_by('awb', "ASC");
+		$query = $this->db->get('awb_by_compagnie');
+		return $query->result();
+	}
+	public function add_addAWB_comp($data)
+	{
+		$query = $this->db->insert('awb_by_compagnie', $data);
+		return $query;
+	}
+	public function get_lefrais($id)
+	{
+		$this->db->where('idfrais', $id);
+		$query = $this->db->get('tbl_frais');
+		return $query->result();
+	}
+	public function get_charges_codes_id($id)
+	{
+		$this->db->where('id_charges_codes', $id);
+		$query = $this->db->get('tbl_charges_codes');
+		return $query->result();
+	}
+	public function get_commodity_id($id)
+	{
+		$this->db->where('id_commodity', $id);
+		$query = $this->db->get('tbl_commodity');
+		return $query->result();
+	}
+	public function get_taux2($id)
+	{
+		$this->db->where('id_taux', $id);
+		$query = $this->db->get('taux');
+		return $query->result();
+	}
+	public function get_lecurrency($id)
+	{
+		$this->db->where('id_currency', $id);
+		$query = $this->db->get('currency');
+		return $query->result();
+	}
+	public function set_a_lentreprise($id, $data)
+	{
+		$this->db->where('idcompagnie', $id);
+		$this->db->update('compaganie', $data);
+		return true;
+	}
+	public function set_a_currency($id, $data)
+	{
+		$this->db->where('id_taux', $id);
+		$this->db->update('taux', $data);
+		return true;
+	}
+
+	public function set_a_lefrais($id, $data)
+	{
+		$this->db->where('idfrais', $id);
+		$this->db->update('tbl_frais', $data);
+		return true;
+	}
+	public function set_a_charges_codes($id, $data)
+	{
+		$this->db->where('id_charges_codes', $id);
+		$this->db->update('tbl_charges_codes', $data);
+		return true;
+	}
+	public function set_a_commodity($id, $data)
+	{
+		$this->db->where('id_commodity', $id);
+		$this->db->update('tbl_commodity', $data);
+		return true;
+	}
+	public function set_a_lecurrency($id, $data)
+	{
+		$this->db->where('id_currency', $id);
+		$this->db->update('currency', $data);
+		return true;
+	}
+	public function set_a_rabais($id, $data)
+	{
+		$this->db->where('idtx', $id);
+		$this->db->update('tbl_facture', $data);
+		return true;
+	}
+
+
+	public function get_factures()
+	{
+		$this->db->select('*, sum(apayer), sum(payer), sum(rabais), (sum(apayer) - sum(payer)-sum(rabais)) as balance,tbl_facture.nofacture, tbl_facture.date');
+		$this->db->from('tbl_facture');
+		$this->db->join('tbl_client', 'tbl_client.codeclient = tbl_facture.codeclient', 'inner');
+		$this->db->join('buil', 'buil.awbl = tbl_facture.awbl', 'inner');
+		$this->db->join('segment', 'segment.id=buil.segmentid', 'inner');
+		$this->db->where('awbl_type', 'import');
+		$this->db->where('shot', '0');
+		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
+		$this->db->group_by('nofacture');
+		$this->db->having('(sum(apayer) - sum(payer) -sum(rabais))>', '0');
+		$this->db->order_by('date', 'ASC');
+
+		$query = $this->db->get();
+		return $query->result();
+	}
+	public function get_factures_caisse($no)
+	{
+
+		$this->db->select('*');
+		$this->db->from('historique_caisse');
+		$this->db->where('historique_caisse.norapport', $no);
+		// $this->db->where('historique_caisse.awbl_type', 'import');
+		$this->db->join('buil', 'buil.awbl = historique_caisse.awb', 'inner');
+		$this->db->where('buil.shot', '0');
+		// $this->db->join('segment', 'segment.id=buil.segmentid','right');
+		// $this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie','inner');
+		$query = $this->db->get();
+		return $query->result();
+	}
+	public function get_rap_livraison($no)
+	{
+
+		$this->db->select('*');
+		$this->db->from('buil');
+		$this->db->where('buil.datelivre', $no);
+		$this->db->where('datelivre !=', '0000-00-00');
+		$this->db->where('datelivre !=', NULL);
+		$this->db->where('buil.typeawbl', 'import');
+		// $this->db->join('buil', 'buil.awbl = historique_caisse.awb','inner');
+		$this->db->join('segment', 'segment.id=buil.segmentid', 'inner');
+		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
+		$query = $this->db->get();
+		return $query->result();
+	}
+
+	public function get_rap_livraison2($no)
+	{
+
+		$this->db->select('*');
+		$this->db->from('degroupage');
+		$this->db->where('degroupage.livrer_le ', $no);
+		$this->db->where('degroupage.livrer_le !=', '0000-00-00');
+		$this->db->where('degroupage.livrer_le !=', NULL);
+		$this->db->where('degroupage.awbl_type', 'import');
+		$this->db->join('buil', 'buil.awbl=degroupage.idbuil', 'inner');
+		$this->db->join('segment', 'segment.id=buil.segmentid', 'inner');
+		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
+		$this->db->order_by('degroupage.nobuil', 'ASC');
+		$query = $this->db->get();
+		return $query->result();
+	}
+	public function recherche_livraison_date($date1, $date2)
+	{
+		$this->db->select('');
+		$this->db->join('segment', 'segment.id=buil.segmentid', 'inner');
+		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
+		$this->db->where('datelivre !=', '0000-00-00');
+		$this->db->where('datelivre !=', NULL);
+		$this->db->where('buil.typeawbl', 'import');
+		$where = "DATE(buil.datelivre) BETWEEN " . "'" . $date1 . "'" . " AND " . "'" . $date2 . "'";
+		$query = $this->db->where($where)->get('buil');
+		return $query->result();
+	}
+	public function recherche_livraison_date2($date1, $date2)
+	{
+		$this->db->select('');
+		$this->db->join('buil', 'buil.awbl=degroupage.idbuil', 'inner');
+		$this->db->join('segment', 'segment.id=buil.segmentid', 'inner');
+		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
+		$this->db->where('degroupage.livrer_le !=', '0000-00-00');
+		$this->db->where('degroupage.livrer_le !=', NULL);
+		$this->db->where('degroupage.awbl_type', 'import');
+		$where = "DATE(degroupage.livrer_le) BETWEEN " . "'" . $date1 . "'" . " AND " . "'" . $date2 . "'";
+		$this->db->order_by('degroupage.nobuil', 'ASC');
+		$query = $this->db->where($where)->get('degroupage');
+		return $query->result();
+	}
+	public function recherche_non_livraison_date($date1, $date2)
+	{
+		$this->db->select('');
+		$this->db->join('segment', 'segment.id=buil.segmentid', 'inner');
+		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
+		// $this->db->where('datelivre !=', '0000-00-00');
+		$this->db->where('datelivre =', NULL);
+		$this->db->where('buil.typeawbl', 'import');
+		$where = "DATE(segment.Date_of_arrival) BETWEEN " . "'" . $date1 . "'" . " AND " . "'" . $date2 . "'";
+		$query = $this->db->where($where)->get('buil');
+		return $query->result();
+	}
+	public function get_caisse_transation($no, $currency)
+	{
+
+		$this->db->select('*');
+		$this->db->from('historique_caisse');
+		$this->db->where('historique_caisse.norapport', $no, 'historique_caisse.monnaie', $currency);
+		$this->db->where('historique_caisse.monnaie', $currency);
+		$this->db->where('historique_caisse.awbl_type', 'import');
+		$this->db->join('buil', 'buil.awbl = historique_caisse.awb', 'inner');
+		$this->db->where('buil.shot', '0');
+		$this->db->join('segment', 'buil.segmentid = segment.id', 'inner');
+		$this->db->order_by('historique_caisse.awb', 'ASC');
+		$query = $this->db->get();
+		return $query->result();
+	}
+	public function get_caisse_transation_ex($no, $currency)
+	{
+
+		$this->db->select('*');
+		$this->db->from('historique_caisse');
+		$this->db->where('historique_caisse.norapport', $no, 'historique_caisse.monnaie', $currency);
+		$this->db->where('historique_caisse.monnaie', $currency);
+		$this->db->where('historique_caisse.awbl_type', 'export');
+		$this->db->join('buil', 'buil.awbl = historique_caisse.awb', 'inner');
+		$this->db->order_by('historique_caisse.awb', 'ASC');
+
+		// $this->db->join('segment', 'buil.segmentid = segment.id','inner');
+		$query = $this->db->get();
+		return $query->result();
+	}
+	public function get_caisse_transation_mes($no, $currency)
+	{
+
+		$this->db->select('*');
+		$this->db->from('historique_caisse');
+		$this->db->where('historique_caisse.norapport', $no, 'historique_caisse.monnaie', $currency);
+		$this->db->where('historique_caisse.monnaie', $currency);
+		$this->db->where('historique_caisse.awbl_type', 'MESDHASA2');
+		$this->db->join('buil', 'buil.awbl = historique_caisse.awb', 'inner');
+		$this->db->order_by('historique_caisse.awb', 'ASC');
+		// $this->db->join('segment', 'buil.segmentid = segment.id','inner');
+		$query = $this->db->get();
+		return $query->result();
+	}
+	public function get_stock()
+	{
+
+		$this->db->select('sum(qty) as total');
+		$this->db->where('recupar', 'n');
+		$this->db->where('typeawbl', 'import');
+		$this->db->where('shot', '0');
+		$query = $this->db->get('buil');
+		return $query->result();
+	}
+
+	public function verify_degroup($id)
+	{
+		$this->db->where('idbuil', $id);
+		$query = $this->db->get('degroupage');
+		if ($query->num_rows() > 0) {
+			return true;
+		} else {
+			return false;
+		}
+		// return $query->result();
+	}
+	public function get_nolivraison($no)
+	{
+		$this->db->where('awbl', $no);
+		$this->db->join('degroupage', 'degroupage.idbuil = buil.awbl', 'inner');
+		$this->db->where('nolivraison !=', '--');
+		// $this->db->where('recupar ==','n');
+		$this->db->where('typeawbl', 'import');
+		$query = $this->db->get('buil');
+		return $query->result();
+	}
+
+	public function get_nolivraison2($no)
+	{
+		$this->db->where('awbl', $no);
+		$this->db->where('nolivraison !=', '--');
+		$this->db->where('typeawbl', 'import');
+		$query = $this->db->get('buil');
+		return $query->result();
+	}
+
+	public function get_paiement_recu($no)
+	{
+
+		$this->db->select('*, sum(apayer), sum(payer), (sum(apayer) - sum(payer)) as balance,tbl_facture.nofacture,tbl_facture.memo as memofac, tbl_facture.date');
+		$this->db->from('tbl_facture');
+		$this->db->join('tbl_client', 'tbl_client.codeclient = tbl_facture.codeclient', 'inner');
+		$this->db->join('buil', 'buil.awbl = tbl_facture.awbl', 'inner');
+		$this->db->where('nopaiement', $no);
+		// $this->db->where('awbl_type', 'import');
+		$query = $this->db->get();
+		return $query->result();
+	}
+	public function recherche_total($flight)
+	{
+
+		// $this->db->select('*');
+		// $this->db->from('segment');
+		// $this->db->join('buil', 'buil.segmentid = segment.id','inner');
+		// $this->db->join('compaganie', 'segment.idcompagnie = compaganie.idcompagnie','inner');
+		// $this->db->like('segment.Voyage_number', $flight);
+		// $this->db->or_like('segment.custum', $flight);
+		// $this->db->or_like('compaganie.compagnie', $flight);
+		// $this->db->or_like('buil.awbl', $flight);
+		// $this->db->or_like('segment.norapport', $flight);
+		// $query = $this->db->get();
+		// return $query->result();
+		$sql = "SELECT awbl,indice,notify_code,notify_name,notify_adress,qty,qtytotal,package,weight,consignee,freight,weight_charge,currency,datecreated,datenotification,status,segmentid,prepaid,collect,nocharge,remarque,datelivre,livrepar,recupar,nif,nolivraison,typeawbl FROM buil  WHERE (awbl LIKE'%$flight%')";
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+
+	public function recherche_notification1($noawb)
+	{
+		$sql = "SELECT sg.Date_of_arrival,sg.Carrier_name,awbl,indice,notify_code,notify_name,notify_adress,qty,qtytotal,package,weight,consignee,freight,weight_charge,currency,buil.datecreated,datenotification,buil.status,segmentid,prepaid,collect,nocharge,remarque,datelivre,livrepar,recupar,nif,nolivraison,remarque_notifcation,person_notif,heure_notication,buil.id as idbuil,typeawbl 
+		FROM buil  
+				
+					 INNER JOIN segment as sg ON (sg.id = buil .segmentid)
+                    WHERE (awbl LIKE'%$noawb%' AND typeawbl ='import')";		
+		
+		
+		
+		$query = $this->db->query($sql);
+		return $query->result();
+	
+	}
+
+
+
+	// pour la pagination
+
+	public function getData($limit, $start, $st = NULL)
+	{
+		if ($st == "NIL") $st = "";
+		else {
+			$st = str_replace("'", "\'", $st);
+		}
+		if ($st == 'f' || $st == 'rech') $st = 0;
+		if ($start == 'f' || $start == 'rech') $start = 0;
+		$sql = "SELECT awbl,indice,notify_code,notify_name,notify_adress,qty,qtytotal,package,weight,consignee,freight,weight_charge,currency,datecreated,datenotification,status,segmentid,prepaid,collect,nocharge,remarque,datelivre,livrepar,recupar,nif,nolivraison,shot,void,typeawbl FROM buil  WHERE (awbl LIKE'%$st%') ORDER BY  awbl ASC";
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	public function getData2($limit, $start, $st = NULL)
+	{
+		if ($st == "NIL") $st = "";
+		else {
+			$st = str_replace("'", "\'", $st);
+		}
+		if ($st == 'f' || $st == 'rech') $st = 0;
+		if ($start == 'f' || $start == 'rech') $start = 0;
+		$sql = "SELECT awbl,indice,notify_code,notify_name,notify_adress,qty,qtytotal,package,weight,consignee,freight,weight_charge,currency,datecreated,datenotification,status,segmentid,prepaid,collect,nocharge,remarque,datelivre,livrepar,recupar,nif,nolivraison,typeawbl FROM buil  WHERE (awbl LIKE'%$st%' OR consignee LIKE'%$st%' OR notify_name LIKE'%$st%') order by id desc limit " . $start . ", " . $limit;
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	/*
+				*/
+	public function getDataCount($st = NULL)
+	{
+		if ($st == "NIL") $st = "";
+		else {
+			$st = str_replace("'", "\'", $st);
+		}
+		$sql = "SELECT id FROM buil   WHERE (awbl LIKE'%$st%' OR notify_code LIKE'%$st%' OR notify_name LIKE'%$st%') ";
+		$query = $this->db->query($sql);
+		return $query->num_rows();
+	}
+
+	public function getDataCountBy($st)
+	{
+		// if ($st == "NIL") $st = ""; else{$st=str_replace("'","\'",$st);}
+		// $sql = "SELECT id FROM buil   WHERE (awbl LIKE'%$st%') ";
+		// $query = $this->db->query($sql);
+		// return $query->num_rows();
+	}
+	//fin//
+
+	public function getDatarech($limit, $start, $st = NULL)
+	{
+		if ($st == "NIL") $st = "";
+		else {
+			$st = str_replace("'", "\'", $st);
+		}
+		if ($st == 'f' || $st == 'rech') $st = 0;
+		if ($start == 'f' || $start == 'rech') $start = 0;
+		$sql = "SELECT awbl,indice,notify_code,notify_name,notify_adress,qty,qtytotal,package,weight,consignee,freight,weight_charge,currency,datecreated,datenotification,status,segmentid,prepaid,collect,nocharge,remarque,datelivre,livrepar,recupar,nif,nolivraison,typeawbl FROM buil  WHERE (awbl LIKE'%$st%' OR consignee LIKE'%$st%' OR notify_name LIKE'%$st%') order by id desc limit " . $start . ", " . $limit;
+		$query = $this->db->query($sql);
+		return $query->result();
+	}
+	/*
+				*/
+	public function getDataCountrech($st = NULL)
+	{
+		if ($st == "NIL") $st = "";
+		else {
+			$st = str_replace("'", "\'", $st);
+		}
+		$sql = "SELECT id FROM buil   WHERE (awbl LIKE'%$st%' OR notify_code LIKE'%$st%' OR notify_name LIKE'%$st%') ";
+		$query = $this->db->query($sql);
+		return $query->num_rows();
+	}
+
+	public function getDataCountByrech($st)
+	{
+		if ($st == "NIL") $st = "";
+		else {
+			$st = str_replace("'", "\'", $st);
+		}
+		$sql = "SELECT id FROM buil   WHERE (awbl LIKE'%$st%') ";
+		$query = $this->db->query($sql);
+		return $query->num_rows();
+	}
+
+	public function set_les_bills($data)
+	{
+		$this->db->where('datenotification =', '0000-00-00');
+		$query = $this->db->update_batch('buil', $data, 'id');
+		return $query;
+	}
+
+	public function set_les_bills2($data)
+	{
+		// $this->db->where('datenotification =', '0000-00-00');
+		$query = $this->db->update_batch('buil', $data, 'id');
+		return $query;
+	}
+	public function set_notif3($id, $data)
+	{
+		$this->db->where('id', $id);
+		$query = $this->db->update('buil', $data);
+		return $query;
+	}
+
+	public function update_consignee($id, $data)
+	{
+		$this->db->where('awbl', $id);
+		$query = $this->db->update('tbl_facture', $data);
+		return $query;
+	}
+	public function lescca($awbl)
+	{
+		$this->db->like('description', 'CCA#');
+		$this->db->where('awbl', $awbl);
+		$this->db->where('awbl_type', 'import');
+		$query = $this->db->get('tbl_facture');
+		return $query->result();
+	}
+	public function delete1_fac($id)
+	{
+		$sql = "delete s FROM tbl_facture s INNER JOIN buil on (s.awbl = buil.awbl) INNER JOIN segment ON buil.segmentid = segment.id INNER JOIN compaganie ON compaganie.idcompagnie = segment.idcompagnie WHERE  (buil.segmentid = '$id' AND buil.typeawbl = 'import')";
+		$query = $this->db->query($sql);
+		return $query;
+	}
+
+	public function delete2_buil($id)
+	{
+		$sql = "delete s FROM buil s INNER JOIN segment ON s.segmentid = segment.id INNER JOIN compaganie ON compaganie.idcompagnie = segment.idcompagnie  WHERE (s.segmentid = '$id' AND s.typeawbl = 'import')";
+		$query = $this->db->query($sql);
+		return $query;
+	}
+	//fin//
+	//
+}
