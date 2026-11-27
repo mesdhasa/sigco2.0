@@ -462,27 +462,49 @@
 				$query = $this->db->get('reservation');
 				return $query->result();
 				}
-				public function recherche_warehouse($custum)
+				// Pagination serveur : $limit/$offset optionnels (NULL = toutes les lignes, comme avant)
+				private function _filtre_recherche_warehouse($custum)
 				{
-				$this->db->select('');
 				$this->db->like('no_warehouse', $custum);
 				$this->db->or_like('nom_ch', $custum);
 				// $this->db->join('awbl', 'awbl.awb_number = warehouse.no_awbl','inner');
 				$this->db->or_like('prenom_ch', $custum);
 				$this->db->or_like('nom_p', $custum);
+				}
+				public function compter_recherche_warehouse($custum)
+				{
+				$this->_filtre_recherche_warehouse($custum);
+				return $this->db->count_all_results('warehouse');
+				}
+				public function recherche_warehouse($custum, $limit = NULL, $offset = 0)
+				{
+				$this->db->select('');
+				$this->_filtre_recherche_warehouse($custum);
 				$this->db->order_by("ladate", "DESC");
+				$this->db->order_by("id_warehouse", "DESC");
+				if ($limit !== NULL) { $this->db->limit((int) $limit, (int) $offset); }
 				$query = $this->db->get('warehouse');
 				return $query->result();
 				}
-				public function recherche_awbl_export($custum)
+				private function _filtre_recherche_awbl_export($custum)
 				{
-				$this->db->select('');
 				$this->db->like('awb_number', $custum);
 				$this->db->or_like('account_number_shipper', $custum);
 				$this->db->or_like('name_shipper', $custum);
 				$this->db->or_like('account_number_consignee', $custum);
 				$this->db->or_like('name_consignee', $custum);
 				$this->db->join('warehouse', 'warehouse.no_awbl= awbl.awb_number','inner');
+				}
+				public function compter_recherche_awbl_export($custum)
+				{
+				$this->_filtre_recherche_awbl_export($custum);
+				return $this->db->count_all_results('awbl');
+				}
+				public function recherche_awbl_export($custum, $limit = NULL, $offset = 0)
+				{
+				$this->db->select('');
+				$this->_filtre_recherche_awbl_export($custum);
+				if ($limit !== NULL) { $this->db->order_by('awbl.id_awbl', 'ASC'); $this->db->limit((int) $limit, (int) $offset); }
 
 				$query = $this->db->get('awbl');
 				return $query->result();
@@ -490,6 +512,8 @@
 
 				public function recherche_vol_date($date1,$date2)
 				{
+				// Parametres valides (AUDIT-001)
+				$date1 = sigco_date($date1); $date2 = sigco_date($date2);
 				$this->db->select('');
 				$this->db->join('compaganie', 'compaganie.idcompagnie = manifeste.idcompagnie','inner');
 				$where = "DATE(date) BETWEEN " . $this->db->escape($date1) . " AND " . $this->db->escape($date2);

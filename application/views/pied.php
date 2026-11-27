@@ -29,7 +29,8 @@
 	<script src="<?php echo base_url()?>assets/js/jquery-migrate-3.6.0.min.js"></script>
 	<?php $sigco_ci =& get_instance(); ?>
 	<script>window.SIGCO_CSRF = {nom: <?php echo json_encode($sigco_ci->security->get_csrf_token_name())?>, valeur: <?php echo json_encode($sigco_ci->security->get_csrf_hash())?>};</script>
-	<script src="<?php echo base_url()?>assets/js/sigco-securite.js"></script>
+	<script src="<?php echo sigco_asset('assets/js/sigco-securite.js')?>"></script>
+	<script src="<?php echo sigco_asset('assets/js/sigco-ui.js')?>"></script>
 
 
 	<!-- <![endif]-->
@@ -92,10 +93,9 @@
 	<!-- ace scripts -->
 	<script src="<?php echo base_url()?>assets/js/ace-elements.min.js"></script>
 	<script src="<?php echo base_url()?>assets/js/ace.min.js"></script>
-	<script src="<?php echo base_url()?>assets/js/mesjs.js"></script>
-	<script src="<?php echo base_url()?>assets/js/Chart.bundle-2.9.4.min.js"></script>
-	<script src="<?php echo base_url()?>assets/js/utils.js"></script>
-	<script src="<?php echo base_url()?>assets/js/jquery.maskedinput.min.js"></script>
+	<script src="<?php echo sigco_asset('assets/js/mesjs.js')?>"></script>
+	<?php if (strtolower(get_instance()->router->fetch_class()) === 'home') { /* graphiques : tableau de bord uniquement */ ?><script src="<?php echo base_url()?>assets/js/Chart.bundle-2.9.4.min.js"></script><script src="<?php echo sigco_asset('assets/js/utils.js')?>"></script><?php } ?>
+		<script src="<?php echo base_url()?>assets/js/jquery.maskedinput.min.js"></script>
 
 
 <!-- inline scripts related to this page -->

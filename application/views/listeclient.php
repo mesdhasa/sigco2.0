@@ -30,8 +30,8 @@ require_once("tete.php");
 							<button type="submit" class="btn btn-sm btn-primary"><i class="ace-icon fa fa-search"></i> Rechercher</button>
 							<span class="text-muted">&nbsp;<?php echo (int) $pagination['total'];?> client(s) &ndash; page <?php echo (int) $pagination['page'];?> / <?php echo (int) $pagination['pages'];?></span>
 						</form>
-						<?php echo $pagination['liens'];?>
-						<table class="table table-striped table-bordered table-hover">
+						<div class="sigco-pagination-barre"><?php echo $pagination['selecteur'];?> <?php echo $pagination['liens'];?></div>
+						<table data-sigco-pagination="serveur" class="table table-striped table-bordered table-hover">
 							<thead>
 							<tr>
 								<th></th>

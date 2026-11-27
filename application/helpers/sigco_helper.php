@@ -14,6 +14,113 @@ if ( ! function_exists('e'))
 	}
 }
 
+/*
+ * Validation des parametres des rapports (AUDIT-001 : dates validees, listes blanches).
+ * Une valeur valide est renvoyee telle quelle ; une valeur invalide est remplacee par une
+ * valeur qui ne correspond a aucune ligne (resultat vide, comme avant en pratique).
+ */
+if ( ! function_exists('sigco_date'))
+{
+	/** Date AAAA-MM-JJ (ou AAAA-MM-JJ HH:MM:SS) valide, sinon '0000-00-00'. */
+	function sigco_date($valeur)
+	{
+		$valeur = trim((string) $valeur);
+		if (preg_match('/^(\d{4})-(\d{2})-(\d{2})( \d{2}:\d{2}(:\d{2})?)?$/', $valeur, $m)
+			&& checkdate((int) $m[2], (int) $m[3], (int) $m[1]))
+		{
+			return $valeur;
+		}
+		return '0000-00-00';
+	}
+}
+
+if ( ! function_exists('sigco_type_awbl'))
+{
+	/** Type de document : import, export ou MESDHASA2 (casse libre, comme en base). */
+	function sigco_type_awbl($valeur)
+	{
+		$valeur = (string) $valeur;
+		return in_array(strtolower($valeur), array('import', 'export', 'mesdhasa2'), TRUE) ? $valeur : '';
+	}
+}
+
+if ( ! function_exists('sigco_devise'))
+{
+	/** Devise : USD ou HTG. */
+	function sigco_devise($valeur)
+	{
+		$valeur = strtoupper((string) $valeur);
+		return in_array($valeur, array('USD', 'HTG'), TRUE) ? $valeur : '';
+	}
+}
+
+if ( ! function_exists('sigco_id'))
+{
+	/** Identifiant numerique (ex. idcompagnie), sinon 0. */
+	function sigco_id($valeur)
+	{
+		return ctype_digit((string) $valeur) ? (int) $valeur : 0;
+	}
+}
+
+/*
+ * Cache des calculs lourds (tableau de bord, factures impayees).
+ * Un resultat reste valable tant qu'aucune ecriture n'a eu lieu depuis son calcul
+ * (toute requete POST appelle sigco_cache_invalider(), voir MY_Controller) et qu'il a
+ * moins de $duree secondes. Un resultat perime peut quand meme etre lu (affichage immediat).
+ */
+if ( ! function_exists('sigco_cache'))
+{
+	function sigco_cache()
+	{
+		$CI =& get_instance();
+		if ( ! isset($CI->cache))
+		{
+			$CI->load->driver('cache', array('adapter' => 'file'));
+		}
+		return $CI->cache;
+	}
+
+	/**
+	 * @return array|NULL  array('donnees' => ..., 'calcule_le' => timestamp, 'a_jour' => bool)
+	 */
+	function sigco_cache_lire($cle, $duree = 300)
+	{
+		$item = sigco_cache()->get('sigco_'.$cle);
+		if ( ! is_array($item) OR ! isset($item['calcule_le']))
+		{
+			return NULL;
+		}
+		$invalidation = (int) sigco_cache()->get('sigco_invalidation');
+		$item['a_jour'] = ($item['calcule_le'] > $invalidation) && (time() - $item['calcule_le'] < $duree);
+		return $item;
+	}
+
+	function sigco_cache_ecrire($cle, $donnees)
+	{
+		sigco_cache()->save('sigco_'.$cle, array('donnees' => $donnees, 'calcule_le' => time()), 86400);
+	}
+
+	/** Marque tous les calculs en cache comme perimes (appele a chaque ecriture). */
+	function sigco_cache_invalider()
+	{
+		sigco_cache()->save('sigco_invalidation', time(), 86400 * 30);
+	}
+}
+
+if ( ! function_exists('sigco_asset'))
+{
+	/**
+	 * URL d'un fichier statique avec sa date de modification (?v=...) : le navigateur peut le
+	 * garder en cache longtemps et recharge automatiquement la nouvelle version apres une mise a jour.
+	 */
+	function sigco_asset($chemin)
+	{
+		$fichier = FCPATH.str_replace('/', DIRECTORY_SEPARATOR, ltrim($chemin, '/'));
+		return base_url($chemin).(is_file($fichier) ? '?v='.filemtime($fichier) : '');
+	}
+}
+
 if ( ! function_exists('sigco_url_retour'))
 {
 	/**
@@ -89,20 +196,43 @@ if ( ! function_exists('sigco_colonnes_any_value'))
 
 if ( ! function_exists('sigco_pagination'))
 {
+	/** Choix proposes a l'utilisateur ; le premier est la valeur par defaut, le dernier le maximum. */
+	function sigco_choix_par_page()
+	{
+		return array(100, 200, 500, 1000);
+	}
+
+	/**
+	 * Lignes par page demandees : ?par_page=N, sinon le choix memorise (cookie sigco_par_page,
+	 * partage avec la pagination des tableaux dans le navigateur), sinon 100.
+	 */
+	function sigco_par_page()
+	{
+		$CI =& get_instance();
+		$choix = sigco_choix_par_page();
+		$demande = (int) $CI->input->get('par_page');
+		if ( ! in_array($demande, $choix, TRUE))
+		{
+			$demande = (int) $CI->input->cookie('sigco_par_page');
+		}
+		return in_array($demande, $choix, TRUE) ? $demande : $choix[0];
+	}
+
 	/**
 	 * Pagination serveur par ?page=N (les autres parametres de l'URL sont conserves).
 	 *
-	 * @param  int $total     nombre total de lignes
-	 * @param  int $par_page  lignes par page
-	 * @return array  array('offset' => int, 'par_page' => int, 'page' => int, 'pages' => int, 'liens' => string HTML)
+	 * @param  int      $total     nombre total de lignes
+	 * @param  int|NULL $par_page  lignes par page (NULL = choix de l'utilisateur, 100 par defaut)
+	 * @return array  offset, par_page, page, pages, total, liens (HTML des pages),
+	 *                selecteur (HTML du choix 100/200/500/1000)
 	 */
-	function sigco_pagination($total, $par_page = 50)
+	function sigco_pagination($total, $par_page = NULL)
 	{
 		$CI =& get_instance();
 		$CI->load->library('pagination');
 
 		$total = max(0, (int) $total);
-		$par_page = max(1, (int) $par_page);
+		$par_page = ($par_page === NULL) ? sigco_par_page() : max(1, (int) $par_page);
 		$pages = max(1, (int) ceil($total / $par_page));
 		$page = (int) $CI->input->get('page');
 		$page = min(max(1, $page), $pages);
@@ -132,13 +262,29 @@ if ( ! function_exists('sigco_pagination'))
 		);
 		$CI->pagination->initialize($config);
 
+		// Selecteur "Afficher N lignes" : conserve les autres parametres, revient a la page 1
+		$params = $CI->input->get();
+		$params = is_array($params) ? $params : array();
+		unset($params['page'], $params['par_page']);
+		$options = '';
+		foreach (sigco_choix_par_page() as $n)
+		{
+			$url = current_url().'?'.http_build_query(array_merge($params, array('par_page' => $n)));
+			$options .= '<option value="'.html_escape($url).'"'.($n === $par_page ? ' selected' : '').'>'.$n
+				.($n === max(sigco_choix_par_page()) ? ' (maximum)' : '').'</option>';
+		}
+		$selecteur = '<span class="sigco-par-page">Afficher <select class="input-sm" data-sigco-par-page="1"'
+			.' onchange="document.cookie=\'sigco_par_page=\'+this.options[this.selectedIndex].text.replace(/\\D/g,\'\')+\';path=/;max-age=31536000;samesite=lax\'; window.location=this.value">'
+			.$options.'</select> lignes par page</span>';
+
 		return array(
-			'offset'   => ($page - 1) * $par_page,
-			'par_page' => $par_page,
-			'page'     => $page,
-			'pages'    => $pages,
-			'total'    => $total,
-			'liens'    => $CI->pagination->create_links(),
+			'offset'    => ($page - 1) * $par_page,
+			'par_page'  => $par_page,
+			'page'      => $page,
+			'pages'     => $pages,
+			'total'     => $total,
+			'liens'     => $CI->pagination->create_links(),
+			'selecteur' => $selecteur,
 		);
 	}
 }

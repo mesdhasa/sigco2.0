@@ -16,7 +16,6 @@ class Facture extends MY_Controller {
 		'Rembourser_facture' => 'a19',
 		'deleteFacture_payer' => 'a19',
 		'description_pmt' => 'a19',
-		'degroup' => 'a19',
 		'caissepdf_usd' => array('a15', 'a19'),
 		'caissepdf_htg' => array('a15', 'a19'),
 		'imprimerecu' => array('a15', 'a19'),
@@ -69,7 +68,8 @@ $val = $this->session->userdata('sesnumber');
 
 $data['act']		='f';
 $data['y']			='rech';
-$data['lessegments']= 	$this->Parser->get_awblFacture($val);
+// Sans recherche, get_awblFacture('') renvoyait les 51 000 AWBL (non affiches par la vue)
+$data['lessegments']= 	($val === '') ? array() : $this->Parser->get_awblFacture($val);
 $this->session->client = "";
 $data['data']= 	0;
 // $data['data']=$this->page->loadpage('getData2','Parser','facture/index',0,'getDataCount');
@@ -96,10 +96,19 @@ $val = $this->session->userdata('sesnumber');
 
 $data['act']		='f';
 $data['y']			='rech';
-$data['lessegments']= 	$this->Parser->get_awblFacture($val);
+// lessegments n'est pas utilise par la vue facturation : inutile de charger des milliers d'AWBL
+$data['lessegments']= 	array();
 $this->session->client = "";
-$getDataCountBy=$this->Parser->getDataCountBy($this->input->post('noawbl'));
-$data['data']=$this->page->search('noawbl',null,'facture','Parser',1,'getData',$getDataCountBy);
+// Pagination serveur (100 lignes par defaut, choix 200/500/1000) : la recherche renvoyait
+// toutes les lignes (ex. "1" -> 84 000 lignes, 100 Mo). La valeur cherchee est gardee en
+// session pour que les liens de pages (GET) refassent la meme recherche.
+$pagination = sigco_pagination($this->Parser->compter_recherche_facturation($val));
+$data['data'] = array(
+	'data'       => $this->Parser->recherche_facturation_page($val, $pagination['par_page'], $pagination['offset']),
+	'page'       => $pagination['page'],
+	'pagination' => $pagination['liens'],
+	'sigco'      => $pagination,
+);
 $this->load->view('facturation',$data);
 }
 public function degrouper()
@@ -965,8 +974,15 @@ redirect('login');
 $data['act']			=	$this->uri->segment(3);
 $data['y']				=	$this->uri->segment(4);
 // Pagination serveur (AUDIT-011/018) : 9 350 factures n'etaient plus affichables en une page
-$numeros = $this->Parser->numeros_factures_impayees();
-$data['pagination'] = sigco_pagination(count($numeros), 50);
+// Liste en cache tant qu'aucune ecriture n'a eu lieu (30 min au plus) : pas de recalcul a chaque page
+$cache = sigco_cache_lire('factures_impayees', 1800);
+if ($cache && $cache['a_jour']) {
+	$numeros = $cache['donnees'];
+} else {
+	$numeros = $this->Parser->numeros_factures_impayees();
+	sigco_cache_ecrire('factures_impayees', $numeros);
+}
+$data['pagination'] = sigco_pagination(count($numeros));
 $data['lesfactures']	= 	$this->Parser->get_factures_page(array_slice($numeros, $data['pagination']['offset'], $data['pagination']['par_page']));
 $this->load->view('rapportFacture',$data);
 }

@@ -136,7 +136,8 @@
 	<script src="<?php echo base_url()?>assets/js/jquery-migrate-3.6.0.min.js"></script>
 	<?php $sigco_ci =& get_instance(); ?>
 	<script>window.SIGCO_CSRF = {nom: <?php echo json_encode($sigco_ci->security->get_csrf_token_name())?>, valeur: <?php echo json_encode($sigco_ci->security->get_csrf_hash())?>};</script>
-	<script src="<?php echo base_url()?>assets/js/sigco-securite.js"></script>
+	<script src="<?php echo sigco_asset('assets/js/sigco-securite.js')?>"></script>
+	<script src="<?php echo sigco_asset('assets/js/sigco-ui.js')?>"></script>
 
 
 		<!-- <![endif]-->

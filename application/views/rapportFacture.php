@@ -10,10 +10,10 @@ if(isset($_SESSION['droit']['a16']) and $_SESSION['droit']['a16']=="1"  ) {
 
 	<div class="col-lg-12 col-md-6 col-sm-12">
 		<h3>Liste des factures impayées <small><?php echo (int) $pagination['total'];?> factures &ndash; page <?php echo (int) $pagination['page'];?> / <?php echo (int) $pagination['pages'];?></small></h3>
-		<?php echo $pagination['liens'];?>
+		<div class="sigco-pagination-barre"><?php echo $pagination['selecteur'];?> <?php echo $pagination['liens'];?></div>
 
 		<div class="table-responsive">
-<table class="table table-striped">
+<table data-sigco-pagination="serveur" class="table table-striped">
     <thead>
       <tr>
         <th></th>

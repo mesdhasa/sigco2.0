@@ -52,7 +52,6 @@ class Export extends MY_Controller {
 		'delete_other_charges' => 'a10',
 		'deleteAwb' => 'a10',
 		'awb_pdf' => 'a10',
-		'awb_pdf2' => 'a10',
 		'tag4x6' => 'a10',
 		'tag4x4' => 'a10',
 		'edit_awbl_export' => 'a10',
@@ -801,8 +800,12 @@ $data['leswarehouse']= 	array();
 $data['act']		='e';
 $data['y']			='warehouse';
 $data['compagnie']	= 	$this->Parser->get_compagnie();
-if(!empty($_POST['custum'])){
-$data['leswarehouse']= 	$this->Parser_export->recherche_warehouse($_POST['custum']);
+// Pagination serveur (une recherche large renvoyait des milliers de lignes) ; valeur gardee en session pour les liens de pages
+if(!empty($_POST['custum'])){ $this->session->set_userdata('sigco_rech_warehouse', (string) $_POST['custum']); }
+if(!empty($_POST['custum']) || ($this->session->userdata('sigco_rech_warehouse') !== NULL && ($this->input->get('page') !== NULL || $this->input->get('par_page') !== NULL))){
+$_POST['custum'] = $this->session->userdata('sigco_rech_warehouse');
+$data['sigco_pag'] = sigco_pagination($this->Parser_export->compter_recherche_warehouse($_POST['custum']));
+$data['leswarehouse']= 	$this->Parser_export->recherche_warehouse($_POST['custum'], $data['sigco_pag']['par_page'], $data['sigco_pag']['offset']);
 $data['antrepot2'] 	= $this->Parser_export->get_antrepot_pcs($_POST['custum']);
 // 							echo "<pre>";
 // print_r($data['leswarehouse']['id_warehouse']);
@@ -1000,9 +1003,12 @@ $data['nowh']= 	$this->uri->segment(2);
 $data['act']		='e';
 $data['y']			='airway';
 $data['compagnie']	= 	$this->Parser_export->get_compagnie();
-if(!empty($_POST['custum'])){
-//$data['leswarehouse']= 	$this->Parser_export->recherche_warehouse($_POST['custum']);
-$data['leswarehouse']= 	$this->Parser_export->recherche_awbl_export($_POST['custum']);
+// Pagination serveur (une recherche large renvoyait des milliers de lignes) ; valeur gardee en session pour les liens de pages
+if(!empty($_POST['custum'])){ $this->session->set_userdata('sigco_rech_awb_export', (string) $_POST['custum']); }
+if(!empty($_POST['custum']) || ($this->session->userdata('sigco_rech_awb_export') !== NULL && ($this->input->get('page') !== NULL || $this->input->get('par_page') !== NULL))){
+$_POST['custum'] = $this->session->userdata('sigco_rech_awb_export');
+$data['sigco_pag'] = sigco_pagination($this->Parser_export->compter_recherche_awbl_export($_POST['custum']));
+$data['leswarehouse']= 	$this->Parser_export->recherche_awbl_export($_POST['custum'], $data['sigco_pag']['par_page'], $data['sigco_pag']['offset']);
 $data['antrepot2'] 	= $this->Parser_export->get_antrepot_pcs($_POST['custum']);
 $this->session->no = $_POST['custum'];
 }else{
@@ -1023,9 +1029,12 @@ $data['nowh']= 	$this->uri->segment(2);
 $data['act']		='e';
 $data['y']			='airway';
 $data['compagnie']	= 	$this->Parser_export->get_compagnie();
-if(!empty($_POST['custum'])){
-//$data['leswarehouse']= 	$this->Parser_export->recherche_warehouse($_POST['custum']);
-$data['leswarehouse']= 	$this->Parser_export->recherche_awbl_export($_POST['custum']);
+// Pagination serveur (une recherche large renvoyait des milliers de lignes) ; valeur gardee en session pour les liens de pages
+if(!empty($_POST['custum'])){ $this->session->set_userdata('sigco_rech_awb_export', (string) $_POST['custum']); }
+if(!empty($_POST['custum']) || ($this->session->userdata('sigco_rech_awb_export') !== NULL && ($this->input->get('page') !== NULL || $this->input->get('par_page') !== NULL))){
+$_POST['custum'] = $this->session->userdata('sigco_rech_awb_export');
+$data['sigco_pag'] = sigco_pagination($this->Parser_export->compter_recherche_awbl_export($_POST['custum']));
+$data['leswarehouse']= 	$this->Parser_export->recherche_awbl_export($_POST['custum'], $data['sigco_pag']['par_page'], $data['sigco_pag']['offset']);
 $data['antrepot2'] 	= $this->Parser_export->get_antrepot_pcs($_POST['custum']);
 $this->session->no = $_POST['custum'];
 }else{

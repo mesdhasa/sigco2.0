@@ -61,7 +61,8 @@ if(isset($_SESSION['sesnumber'])){
 <!-- <span class="badge badge-dark">Dark</span> -->
 
 							<div class="table-responsive"><br>
-<table id="simple-table" class="table  table-bordered table-hover table-condensed">
+<?php if (isset($pagination) && is_array($pagination)) { ?><div class="sigco-pagination-barre"><?php echo $pagination['selecteur']; ?> <span class="text-muted"><?php echo (int) $pagination['total']; ?> r&eacute;sultat(s) &ndash; page <?php echo (int) $pagination['page']; ?> / <?php echo (int) $pagination['pages']; ?></span> <?php echo $pagination['liens']; ?></div><?php } ?>
+<table data-sigco-pagination="serveur" id="simple-table" class="table  table-bordered table-hover table-condensed">
 											<thead>
 												<tr>
 													<th class="center"></th>
@@ -82,7 +83,7 @@ if(isset($_SESSION['sesnumber'])){
 
 
 											<tbody>
-												<?php $r=0; foreach($lessegments as $row){$r++;?>
+												<?php $r = (isset($pagination) && is_array($pagination)) ? $pagination['offset'] : 0; foreach($lessegments as $row){$r++;?>
 													<?php if( $row->nolivraison=="OK-export" AND $row->typeawbl=="export") {?>
 
 												<tr class="success">
@@ -155,6 +156,7 @@ if(isset($_SESSION['sesnumber'])){
 
 											</tbody>
 										</table>
+<?php if (isset($pagination) && is_array($pagination)) { ?><div class="sigco-pagination-barre"><?php echo $pagination['liens']; ?></div><?php } ?>
 								</div>
 							</div>
 						</div>

@@ -50,4 +50,26 @@ Options -Indexes
 	Header unset X-Powered-By
 </IfModule>
 
+# Rapidite : fichiers statiques gardes 30 jours par le navigateur (les fichiers propres a SIGCO
+# sont appeles avec ?v=<date de modification> : une mise a jour est rechargee immediatement).
+<IfModule mod_headers.c>
+	<FilesMatch "\.(css|js|png|jpe?g|gif|ico|svg|woff2?|ttf|eot|otf)$">
+		Header set Cache-Control "public, max-age=2592000"
+	</FilesMatch>
+</IfModule>
+<IfModule mod_expires.c>
+	ExpiresActive On
+	ExpiresByType text/css "access plus 30 days"
+	ExpiresByType application/javascript "access plus 30 days"
+	ExpiresByType text/javascript "access plus 30 days"
+	ExpiresByType image/png "access plus 30 days"
+	ExpiresByType image/jpeg "access plus 30 days"
+	ExpiresByType image/gif "access plus 30 days"
+	ExpiresByType font/woff2 "access plus 30 days"
+</IfModule>
+# Rapidite : compression des pages, styles et scripts (3 a 5 fois moins de donnees a transferer)
+<IfModule mod_deflate.c>
+	AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript application/javascript application/json image/svg+xml
+</IfModule>
+
 php_value max_input_vars 10000

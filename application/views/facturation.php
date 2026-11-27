@@ -92,8 +92,11 @@ if(isset($_SESSION['sesnumber'])){
 <!-- <span class="badge badge-info">Info</span> -->
 <span class="badge badge-light">Import</span>
 <!-- <span class="badge badge-dark">Dark</span> -->
+<?php if (is_array($data) && isset($data['sigco'])) { ?>
+							<div class="sigco-pagination-barre"><?php echo $data['sigco']['selecteur'];?> <span class="text-muted"><?php echo (int) $data['sigco']['total'];?> r&eacute;sultat(s) &ndash; page <?php echo (int) $data['sigco']['page'];?> / <?php echo (int) $data['sigco']['pages'];?></span> <?php echo $data['sigco']['liens'];?></div>
+<?php } ?>
 							<div class="table-responsive">
-<table id="simple-table" class="table  table-bordered table-hover table-condensed">
+<table id="simple-table" data-sigco-pagination="serveur" class="table  table-bordered table-hover table-condensed">
 										<p></p>
 											<thead>
 												<tr>
@@ -420,6 +423,9 @@ if(isset($_SESSION['sesnumber'])){
 											</tbody>
 										</table>
 								</div>
+<?php if (is_array($data) && isset($data['sigco'])) { ?>
+							<div class="sigco-pagination-barre"><?php echo $data['sigco']['liens'];?></div>
+<?php } ?>
 							</div>
 
 						</div>

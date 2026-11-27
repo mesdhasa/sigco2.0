@@ -45,7 +45,7 @@ Branche Git : `bloc02-securite`. Plateforme cible : **PHP 8.2 à 8.5**, **MySQL 
 | AUDIT-004 | `password_hash()` ; les anciens MD5 sont convertis automatiquement à la connexion. Plus de mot de passe par défaut : mot de passe temporaire aléatoire, changement obligatoire (12 caractères, lettres + chiffres). Les comptes encore sur « password » sont forcés à changer. |
 | AUDIT-009 | Session régénérée à la connexion, blocage après 5 échecs par identifiant / 20 par IP (15 min), cookies `HttpOnly` + `SameSite=Lax` (+ `Secure` si `force_https`), sessions dans `application/cache/sessions`, redirection HTTPS si `force_https`. |
 | AUDIT-007 | CSRF CodeIgniter activé. `assets/js/sigco-securite.js` ajoute le jeton à tous les formulaires POST et appels AJAX ; `confirmation_lien()` envoie désormais un **POST**. Les actions d'écriture (`$post_requis`) refusent le GET. |
-| AUDIT-001 | ~40 requêtes SQL paramétrées (`?` liés) dans `Parser.php` / `Parser_export.php`, sans changer leur logique ; `LIMIT` convertis en entiers ; échappement maison supprimé. |
+| AUDIT-001 | ~40 requêtes SQL paramétrées (`?` liés) dans `Parser.php` / `Parser_export.php`, sans changer leur logique ; `LIMIT` convertis en entiers ; échappement maison supprimé. Paramètres des 25 fonctions de rapport validés à l'entrée (dates, type import/export/MESDHASA2, devise USD/HTG, identifiant de compagnie) : résultats identiques pour toute entrée valide. |
 | AUDIT-005 / 027 | Secrets hors du code : `application/config/env.php` (non versionné, modèle `env.example.php`). Identifiants de production retirés de `database.php`. Nouvelle clé de chiffrement. |
 | AUDIT-006 / 010 | `.htaccess` : fichiers cachés (`.git`, `.ftpconfig`…), listing, dossiers internes, `*.sql`, `composer.*`, scripts PHP de `assets/` (dont `barcode.php` qui permettait d'écrire un fichier arbitraire) bloqués. Environnement **production par défaut** (aucune erreur détaillée affichée), `db_debug` uniquement en développement, journal d'erreurs activé. |
 | AUDIT-008 | Sorties encodées : listes clients, listes AWB (import/export), recherche, messages flash contenant une saisie. |
@@ -82,10 +82,12 @@ Branche Git : `bloc02-securite`. Plateforme cible : **PHP 8.2 à 8.5**, **MySQL 
 
 ## 4. Points d'attention
 
+- **Cartographie des droits** : `docs/DROITS.md` (générée depuis le code et la base, 36 droits utilisés sur 100) — à faire valider par l'IT Manager.
 - Les droits côté serveur reprennent ceux **déjà testés par les vues** (ex. liste des clients = a21 comme la vue, rapports hebdomadaires = a17). La cartographie complète des 100 droits est à valider avec l'IT Manager. Elle se lit dans chaque contrôleur (`$acces`).
 - Les groupes `005001A` et `006001A` (16 comptes) n'existent pas dans `groupe_user` : ces comptes n'ont aucun droit, comme avant.
 - Le formulaire « mot de passe oublié » n'envoie plus d'e-mail de test factice : il invite à contacter l'administrateur (réinitialisation par lien e-mail = hors périmètre, section 9 du rapport).
-- `reservation` (menu désactivé) renvoie une erreur 500 : ses vues n'existent pas dans le code (inchangé).
+- `reservation` (menu désactivé) renvoie une erreur 500 : ses vues ont été déplacées dans `views/export/poubel_exp/` (inchangé, à arbitrer avec MESDHASA).
+- Code mort retiré : `test/`, `views/ranger/`, `application/blank.php`, `application/factbill.php`, copies `awb_pdf_bck.php` / `tag4x6_pdf.php2`.
 - Statistiques de poids (`facture/statistics_weight`) : la vue force `$_POST['type'] = ""`, donc « Inbound » s'affiche avec les colonnes « Outbound » (date, vol, pays vides). Bogue existant signalé, non corrigé (rapports = bloc 03 / AUDIT-017).
 - Bootstrap 3.4.1 garde deux avis XSS (attributs `data-*`, tooltip/popover) corrigés uniquement en Bootstrap 5, ce qui imposerait de refaire le thème ACE. Risque limité : SIGCO n'alimente pas ces attributs avec des saisies.
 - Gros PDF sur de longues périodes (ex. *informatics/import fees* sur 2 mois ≈ 70 s) : limite de html2pdf sur de très grands tableaux, à traiter avec l'optimisation des rapports (bloc 03 / section 9).
@@ -100,3 +102,28 @@ Branche Git : `bloc02-securite`. Plateforme cible : **PHP 8.2 à 8.5**, **MySQL 
 - 18 PDF et 4 exports Excel générés et vérifiés (`%PDF-`, fichier XLS valide).
 - Tableau de bord : 10 compteurs identiques à l'ancien code (comparaison automatique).
 - InnoDB : nombre de lignes identique avant / après sur toutes les tables principales.
+
+---
+
+## 8. Pagination et rapidité (27/11/2026)
+
+**Pagination** : 100 lignes par défaut ; l'utilisateur peut choisir 200, 500 ou 1000 (maximum). Au-delà, les lignes sont réparties en pages. Le choix est mémorisé (cookie `sigco_par_page`) et vaut pour toutes les listes.
+- *Côté serveur* (seules les lignes de la page sont lues) : factures impayées, clients, recherche de facturation, recherche AWB, Airway Bill, Warehouse. Helper `sigco_pagination($total)` → `offset`, `par_page`, `liens`, `selecteur`. Le critère de recherche est gardé en session pour les liens de pages.
+- *Dans le navigateur* (`assets/js/sigco-ui.js`) : tout autre tableau de plus de 100 lignes. Les rapports qui calculent des totaux restent complets côté serveur (totaux exacts). Les lignes de total restent visibles. Un tableau déjà paginé côté serveur porte `data-sigco-pagination="serveur"` et n'est pas retraité.
+- Une règle CSS dans l'en-tête (`sigco-pre-pagination`) masque les lignes au-delà de la 100e pendant le chargement : sans elle, un tableau de 6 000 lignes prenait 5 s à s'afficher.
+
+**Rapidité**
+| Action | Avant | Après |
+|---|---|---|
+| Tableau de bord après connexion | 5,3 s (cache vide) | 0,1 s (recalcul en arrière-plan) |
+| Page Facturation | 2,3 s (chargeait 51 000 AWBL inutiles) | 0,1 s |
+| Recherche facturation « 1 » | 9,1 s, 103 Mo | 0,2 s, 220 Ko |
+| Recherche AWB « 1 » | 9,3 s, 54 Mo | 0,13 s, 129 Ko |
+| Airway Bill / Warehouse | 2,6 s / 0,9 s (8 Mo / 7 Mo) | 0,3 s / 0,2 s |
+| Factures impayées | 3,9 s | 0,2 s (cache), ~4 s juste après une écriture |
+| Rapport de caisse 6 mois (navigateur) | 8,1 s | 2,2 s |
+
+- Cache des calculs lourds (`sigco_cache_lire/ecrire/invalider`) : invalidé automatiquement par toute action d'écriture (`$post_requis`), les recherches ne l'invalident pas.
+- Fichiers statiques gardés 30 jours par le navigateur (`.htaccess`) ; les fichiers propres à SIGCO sont appelés avec `?v=<date>` (`sigco_asset()`) pour être rechargés après une mise à jour. Compression `mod_deflate` à activer chez l'hébergeur (règles déjà dans `.htaccess`).
+- Chart.js et `utils.js` ne sont chargés que sur le tableau de bord.
+- Indicateur « Traitement en cours » dès le clic, et blocage du double envoi des formulaires (évite un paiement enregistré deux fois).
