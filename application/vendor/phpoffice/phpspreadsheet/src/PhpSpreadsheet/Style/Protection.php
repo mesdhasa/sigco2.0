@@ -11,17 +11,13 @@ class Protection extends Supervisor
 
     /**
      * Locked.
-     *
-     * @var string
      */
-    protected $locked;
+    protected ?string $locked = null;
 
     /**
      * Hidden.
-     *
-     * @var string
      */
-    protected $hidden;
+    protected ?string $hidden = null;
 
     /**
      * Create a new Protection.
@@ -33,7 +29,7 @@ class Protection extends Supervisor
      *                                    Leave this value at default unless you understand exactly what
      *                                        its ramifications are
      */
-    public function __construct($isSupervisor = false, $isConditional = false)
+    public function __construct(bool $isSupervisor = false, bool $isConditional = false)
     {
         // Supervisor?
         parent::__construct($isSupervisor);
@@ -48,22 +44,23 @@ class Protection extends Supervisor
     /**
      * Get the shared style component for the currently active cell in currently active sheet.
      * Only used for style supervisor.
-     *
-     * @return Protection
      */
-    public function getSharedComponent()
+    public function getSharedComponent(): self
     {
-        return $this->parent->getSharedComponent()->getProtection();
+        /** @var Style $parent */
+        $parent = $this->parent;
+
+        return $parent->getSharedComponent()->getProtection();
     }
 
     /**
      * Build style array from subcomponents.
      *
-     * @param array $array
+     * @param mixed[] $array
      *
-     * @return array
+     * @return array{protection: mixed[]}
      */
-    public function getStyleArray($array)
+    public function getStyleArray(array $array): array
     {
         return ['protection' => $array];
     }
@@ -80,11 +77,11 @@ class Protection extends Supervisor
      * );
      * </code>
      *
-     * @param array $styleArray Array containing style information
+     * @param array{locked?: string, hidden?: string} $styleArray Array containing style information
      *
      * @return $this
      */
-    public function applyFromArray(array $styleArray)
+    public function applyFromArray(array $styleArray): static
     {
         if ($this->isSupervisor) {
             $this->getActiveSheet()->getStyle($this->getSelectedCells())->applyFromArray($this->getStyleArray($styleArray));
@@ -102,10 +99,8 @@ class Protection extends Supervisor
 
     /**
      * Get locked.
-     *
-     * @return string
      */
-    public function getLocked()
+    public function getLocked(): ?string
     {
         if ($this->isSupervisor) {
             return $this->getSharedComponent()->getLocked();
@@ -121,7 +116,7 @@ class Protection extends Supervisor
      *
      * @return $this
      */
-    public function setLocked($lockType)
+    public function setLocked(string $lockType): static
     {
         if ($this->isSupervisor) {
             $styleArray = $this->getStyleArray(['locked' => $lockType]);
@@ -135,10 +130,8 @@ class Protection extends Supervisor
 
     /**
      * Get hidden.
-     *
-     * @return string
      */
-    public function getHidden()
+    public function getHidden(): ?string
     {
         if ($this->isSupervisor) {
             return $this->getSharedComponent()->getHidden();
@@ -154,7 +147,7 @@ class Protection extends Supervisor
      *
      * @return $this
      */
-    public function setHidden($hiddenType)
+    public function setHidden(string $hiddenType): static
     {
         if ($this->isSupervisor) {
             $styleArray = $this->getStyleArray(['hidden' => $hiddenType]);
@@ -171,19 +164,20 @@ class Protection extends Supervisor
      *
      * @return string Hash code
      */
-    public function getHashCode()
+    public function getHashCode(): string
     {
         if ($this->isSupervisor) {
             return $this->getSharedComponent()->getHashCode();
         }
 
         return md5(
-            $this->locked .
-            $this->hidden .
-            __CLASS__
+            $this->locked
+            . $this->hidden
+            . __CLASS__
         );
     }
 
+    /** @return mixed[] */
     protected function exportArray1(): array
     {
         $exportedArray = [];

@@ -84,10 +84,10 @@ foreach($lessegments as $awb){}
 
 		  $i++;
 			$apayer2=$row->apayer-$row->rabais;
-      $apayer1+=$row->apayer;
+      $apayer1+= (float) $row->apayer;
       $somme += $apayer2;
-		  $discount += $row->rabais;
-		  $paiement += $row->payer;
+		  $discount += (float) $row->rabais;
+		  $paiement += (float) $row->payer;
 		  if($row->codetx=="PMT"){
 			 $codepaiement[] = $row->nopaiement;
 		  }

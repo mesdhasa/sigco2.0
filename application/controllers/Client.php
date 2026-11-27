@@ -1,7 +1,20 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 require_once APPPATH."/third_party/ctools.php";
-class Client extends CI_Controller {
+/**
+ * Controle d'acces cote serveur (Bloc 02 - AUDIT-002/003/007, voir MY_Controller).
+ * Clients : a21 (pages client, comme les vues), ecritures en POST.
+ */
+class Client extends MY_Controller {
+
+	protected $acces_defaut = 'a21';
+
+	protected $acces = array();
+
+	protected $post_requis = array(
+		'updateclient', 'supprimerclient', 'addclient',
+	);
+
 
 	public function index()
 		{
@@ -16,7 +29,10 @@ class Client extends CI_Controller {
 			$data['y']			=	$this->uri->segment(4);
 
 			// $data['lessegments']= 	$this->Parser->get_segments();
-		 	$data['lesclients']= 	$this->Parser->get_allclient();
+			// Pagination serveur + recherche (AUDIT-018)
+			$data['recherche'] = trim((string) $this->input->get('q'));
+			$data['pagination'] = sigco_pagination($this->Parser->count_clients($data['recherche']), 50);
+			$data['lesclients'] = $this->Parser->get_clients_page($data['pagination']['par_page'], $data['pagination']['offset'], $data['recherche']);
 			$this->load->view('listeclient',$data);
 		}
 	public function ajouter()

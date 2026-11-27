@@ -1,4 +1,7 @@
 <?php
+// Compatibilite PHP 8 (Bloc 02) : initialisations implicites en PHP 7, obligatoires en PHP 8
+isset($a) OR $a = 0;
+?><?php
 $content = "
 <style>
 table {
@@ -57,7 +60,7 @@ font-size: 15px;
 <page backtop=\"5mm\" backbottom=\"5mm\" backleft=\"10mm\" backright=\"2mm\" footer=\"page\">
 <span class='span1'>MESDHASA</span><br/>
 <span class='span2'>Freight Paid </span><br/>
-<span  class='span2'><p>".dateVersChainetext($this->uri->segment(3))." ".au." ".dateVersChainetext($this->uri->segment(4))."<br/><br/> </p></span>
+<span  class='span2'><p>".dateVersChainetext($this->uri->segment(3))." au ".dateVersChainetext($this->uri->segment(4))."<br/><br/> </p></span>
 <table>
 <thead>
 <tr>
@@ -75,20 +78,20 @@ font-size: 15px;
 $statut=" ";
 	$i = 0;foreach($lessegments as $rs){$i++;
        if($rs->prepaid=="1"){
-        $statut=PP; 
+        $statut='PP'; 
        }
        if($rs->collect=="1"){
-        $statut=CC; 
+        $statut='CC'; 
        }
        if($rs->nocharge=="1"){
-        $statut=NC; 
+        $statut='NC'; 
        }
-    $a+=$rs->totalF;
+    $a+= (float) $rs->totalF;
 $content .= "<tr  class=\"color\" >
 <td  align='center' >".$i."</td>
 <td align='center' class='width10'>".$rs->awb."</td>
 <td align='center' class='width10'>".$rs->num."</td>
-<td align='center' class='width10'>".Freight."</td>
+<td align='center' class='width10'>Freight</td>
 <td align='center'>".$rs->totalF."</td>
 <td align='center'>".$rs->monnaie."</td>
 

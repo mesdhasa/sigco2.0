@@ -11,7 +11,7 @@ $datesession = $this->session->ladate;
 
 <div class="page-header">
 <h1>
-<a href="<?php echo $_SERVER['HTTP_REFERER']?>"><i class="fa fa-arrow-circle-left" aria-hidden="true">Back</i></a>
+<a href="<?php echo e(sigco_url_retour())?>"><i class="fa fa-arrow-circle-left" aria-hidden="true">Back</i></a>
 <small><i class="ace-icon fa fa-angle-double-right"></i>Air Way Bill</small></h1>
 </div>
 

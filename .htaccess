@@ -1,6 +1,53 @@
-RewriteEngine on
-RewriteCond $1 !^(index\.php|resources|robots\.txt)
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ index.php/$1 [L,QSA]
+# SIGCO - regles Apache (AUDIT-006, AUDIT-009, AUDIT-010)
+
+# Pas de listing des dossiers
+Options -Indexes
+
+# Fichiers caches (.git, .ftpconfig, .env, .htaccess...) : jamais servis
+<IfModule mod_rewrite.c>
+	RewriteEngine on
+	RewriteRule (^|/)\. - [F,L]
+</IfModule>
+
+# Fichiers sensibles ou techniques a la racine : jamais servis
+<FilesMatch "(?i)^(composer\.(json|lock)|README\.md|www|.*\.(sql|sql\.gz|bak|old|orig|log|ini|sh|md|lock|dist)|.*\.php[0-9]+)$">
+	<IfModule authz_core_module>
+		Require all denied
+	</IfModule>
+	<IfModule !authz_core_module>
+		Deny from all
+	</IfModule>
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+	# Dossiers internes : jamais servis directement
+	RewriteRule ^(application|system|cron|test|sql|docs)(/|$) - [F,L]
+
+	# HTTPS force si le serveur a defini SIGCO_FORCE_HTTPS (facultatif : la redirection est aussi faite par PHP si force_https = TRUE dans env.php)
+	RewriteCond %{ENV:SIGCO_FORCE_HTTPS} =1
+	RewriteCond %{HTTPS} !=on
+	RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+	RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+	# Front controller CodeIgniter
+	RewriteCond $1 !^(index\.php|resources|robots\.txt)
+	RewriteCond %{REQUEST_FILENAME} !-f
+	RewriteCond %{REQUEST_FILENAME} !-d
+	RewriteRule ^(.*)$ index.php/$1 [L,QSA]
+</IfModule>
+
+# Scripts PHP dans assets/ : jamais executes, sauf le generateur de code-barres
+# en lecture seule utilise par les etiquettes (assets/images/cb.php).
+# assets/barcode/barcode.php permettait d'ecrire un fichier n'importe ou (parametre filepath).
+<IfModule mod_rewrite.c>
+	RewriteCond %{REQUEST_URI} !/assets/images/cb\.php$
+	RewriteRule ^assets/.*\.(php[0-9]?|phtml|phar)$ - [F,L,NC]
+</IfModule>
+
+# Ne pas annoncer la version de PHP
+<IfModule mod_headers.c>
+	Header always unset X-Powered-By
+	Header unset X-Powered-By
+</IfModule>
+
 php_value max_input_vars 10000

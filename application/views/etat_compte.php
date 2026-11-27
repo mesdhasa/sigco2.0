@@ -4,6 +4,8 @@ if(isset($_SESSION['droit']['a21']) and $_SESSION['droit']['a21']=="1"  ) {
 	redirect('home');
 }
 foreach($lespaiement as $row){}
+// PHP 8 : client sans facture ouverte -> fiche vide (avant : avertissements "Undefined variable")
+isset($row) OR $row = (object) array('societe' => '', 'adresse' => '', 'email' => '');
  ?>
 <style>
 td, th{

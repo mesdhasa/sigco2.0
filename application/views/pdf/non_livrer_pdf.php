@@ -46,7 +46,7 @@ font-style: italic;
 <page backtop=\"5mm\" backbottom=\"5mm\" backleft=\"2mm\" backright=\"2mm\" footer=\"page\">
 <span class='span1'>MESDHASA</span><br/>
 <span class='span2'>W/H INVENTORY</span><br/>
-<span class='span2'>Data:&nbsp;&nbsp;".dateVersChainetext($date1)."&nbsp;".au."&nbsp;".dateVersChainetext($date2)." </span><BR/><BR/>
+<span class='span2'>Data:&nbsp;&nbsp;".dateVersChainetext($date1)."&nbsp;au&nbsp;".dateVersChainetext($date2)." </span><BR/><BR/>
 <table>
 <thead>
 <tr>
@@ -67,8 +67,8 @@ $c=0.00;
 $a=count($les_non_livraisons);
 
 $i=0;foreach($les_non_livraisons as $row){$i++;
-$b+=$row->qtytotal;
-$c+=$row->weight;
+$b+= (float) $row->qtytotal;
+$c+= (float) $row->weight;
 $content .= "<tr  class=\"color\" >
 <td  align='center'>".$i."</td>
 <td align='center'>".dateverschainetext($row->Date_of_arrival)."</td>

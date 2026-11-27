@@ -23,9 +23,8 @@ defined('BASEPATH') or exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
-// LOCAL (WAMP). Production : 'https://sigco.mesdhasa.com/sigco/'
-// LOCAL (WAMP). Valeur précédente : 'http://localhost/medhasasysteme/project/var/www/html/sigco/'
-$config['base_url'] = 'http://localhost/medhasasysteme/sigco/';
+// Valeur lue dans application/config/env.php (propre a chaque serveur)
+$config['base_url'] = sigco_env('base_url', '');
 
 /*
 |--------------------------------------------------------------------------
@@ -138,9 +137,7 @@ $config['subclass_prefix'] = 'MY_';
 | Note: This will NOT disable or override the CodeIgniter-specific
 |	autoloading (application/config/autoload.php)
 */
-//config['composer_autoload'] = FALSE;
-$config['composer_autoload'] = TRUE;
-require_once APPPATH . 'vendor/autoload.php';
+$config['composer_autoload'] = APPPATH.'vendor/autoload.php';
 /*
 |--------------------------------------------------------------------------
 | Allowed URL Characters
@@ -202,7 +199,7 @@ $config['directory_trigger'] = 'd';
 |          for backwards compatibility purposes!
 |
 */
-$config['allow_get_array'] = TRUE;
+// allow_get_array : supprime dans CodeIgniter 3.2+ ($_GET toujours disponible)
 
 /*
 |--------------------------------------------------------------------------
@@ -226,7 +223,8 @@ $config['allow_get_array'] = TRUE;
 | your log files will fill up very fast.
 |
 */
-$config['log_threshold'] = 0;
+// 1 = erreurs uniquement (journal dans application/logs)
+$config['log_threshold'] = 1;
 
 /*
 |--------------------------------------------------------------------------
@@ -252,6 +250,7 @@ $config['log_path'] = '';
 |
 */
 $config['log_file_extension'] = '';
+$config['log_filename'] = '';
 
 /*
 |--------------------------------------------------------------------------
@@ -327,7 +326,8 @@ $config['cache_query_string'] = FALSE;
 | https://codeigniter.com/user_guide/libraries/encryption.html
 |
 */
-$config['encryption_key'] = 'MessaBikensDoralyaPassword';
+// Cle lue dans application/config/env.php (jamais dans le code)
+$config['encryption_key'] = sigco_env('encryption_key', '') !== '' ? hex2bin(sigco_env('encryption_key')) : '';
 
 /*
 |--------------------------------------------------------------------------
@@ -383,7 +383,8 @@ $config['encryption_key'] = 'MessaBikensDoralyaPassword';
 $config['sess_driver'] = 'files';
 $config['sess_cookie_name'] = 'ci_session';
 $config['sess_expiration'] = 7200;
-$config['sess_save_path'] = NULL;
+// Dossier dedie (et non le dossier temporaire partage du serveur)
+$config['sess_save_path'] = sigco_env('sess_save_path', '') !== '' ? sigco_env('sess_save_path') : APPPATH.'cache/sessions';
 $config['sess_match_ip'] = FALSE;
 $config['sess_time_to_update'] = 300;
 $config['sess_regenerate_destroy'] = FALSE;
@@ -406,8 +407,10 @@ $config['sess_regenerate_destroy'] = FALSE;
 $config['cookie_prefix']    = '';
 $config['cookie_domain']    = '';
 $config['cookie_path']        = '/';
-$config['cookie_secure']    = FALSE;
-$config['cookie_httponly']     = FALSE;
+$config['cookie_secure']    = (bool) sigco_env('force_https', FALSE);
+$config['cookie_httponly']  = TRUE;
+$config['cookie_samesite']  = 'Lax';
+$config['sess_samesite']    = 'Lax';
 
 /*
 |--------------------------------------------------------------------------
@@ -421,7 +424,7 @@ $config['cookie_httponly']     = FALSE;
 |          for backwards compatibility purposes!
 |
 */
-$config['standardize_newlines'] = FALSE;
+// standardize_newlines : supprime dans CodeIgniter 3.2+
 
 /*
 |--------------------------------------------------------------------------
@@ -451,11 +454,12 @@ $config['global_xss_filtering'] = FALSE;
 | 'csrf_regenerate' = Regenerate token on every submission
 | 'csrf_exclude_uris' = Array of URIs which ignore CSRF checks
 */
-$config['csrf_protection'] = FALSE;
-$config['csrf_token_name'] = 'csrf_test_name';
-$config['csrf_cookie_name'] = 'csrf_cookie_name';
+$config['csrf_protection'] = TRUE;
+$config['csrf_token_name'] = 'sigco_csrf';
+$config['csrf_cookie_name'] = 'sigco_csrf_cookie';
 $config['csrf_expire'] = 7200;
-$config['csrf_regenerate'] = TRUE;
+// FALSE : evite les erreurs sur les pages qui font plusieurs appels AJAX
+$config['csrf_regenerate'] = FALSE;
 $config['csrf_exclude_uris'] = array();
 
 /*
@@ -505,7 +509,7 @@ $config['time_reference'] = 'local';
 | Note: You need to have eval() enabled for this to work.
 |
 */
-$config['rewrite_short_tags'] = FALSE;
+// rewrite_short_tags : supprime dans CodeIgniter 3.2+
 
 /*
 |--------------------------------------------------------------------------
@@ -524,3 +528,21 @@ $config['rewrite_short_tags'] = FALSE;
 | Array:		array('10.0.1.200', '192.168.5.0/24')
 */
 $config['proxy_ips'] = '';
+
+/*
+|--------------------------------------------------------------------------
+| Mode SQL de session (Bloc 02 - compatibilite MySQL 8.0 / 8.4 / 9.x)
+|--------------------------------------------------------------------------
+| Applique a chaque connexion par MY_Controller, pour que SIGCO se comporte
+| de la meme facon quel que soit le sql_mode par defaut du serveur
+| (MySQL 8.0+ et 9.x : ONLY_FULL_GROUP_BY, STRICT_TRANS_TABLES, NO_ZERO_DATE...).
+|
+| ONLY_FULL_GROUP_BY est actif : les requetes groupees utilisent ANY_VALUE().
+|
+| Volontairement NON actives pour l'instant (voir docs/BLOC02_SECURITE.md) :
+|  - NO_ZERO_DATE / NO_ZERO_IN_DATE : '0000-00-00' est une valeur metier
+|    (ex. buil.datenotification = AWBL non notifie, 16 182 lignes) ;
+|  - STRICT_TRANS_TABLES : des formulaires envoient '' pour des montants ou
+|    des dates ; a activer apres validation des saisies (AUDIT-028) ;
+*/
+$config['sigco_sql_mode'] = sigco_env('sql_mode', 'ONLY_FULL_GROUP_BY,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION');

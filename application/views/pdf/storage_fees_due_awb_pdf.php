@@ -45,7 +45,7 @@ $total_poids = 0;
 	$result = $this->Parser->get_degroupage($row->awb);
 	if(count($result)>0){
 	foreach($result as $r){
-	$total_poids += $r->poids;
+	$total_poids += (float) $r->poids;
 	}
 }
 $lbs=0;

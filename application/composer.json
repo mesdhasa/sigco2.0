@@ -1,11 +1,24 @@
 {
+    "name": "mesdhasa/sigco",
+    "description": "SIGCO 2.0 - dependances PHP (CodeIgniter 3.1.13, cible PHP 8.3)",
+    "type": "project",
+    "license": "proprietary",
     "require": {
-        "phpoffice/phpspreadsheet": "^1.6",
-        "mpdf/mpdf": "^7.1",
-        "amenadiel/jpgraph": "^4.0",
-        "nnnick/chartjs": "^2.7",
-        "spipu/html2pdf": "^5.2",
-        "tecnickcom/tcpdf": "^6.2",
-        "depotwarehouse/oauth2-bnet": "^5.0"
+        "php": ">=8.2",
+        "ext-gd": "*",
+        "ext-mbstring": "*",
+        "ext-xml": "*",
+        "ext-zip": "*",
+        "phpoffice/phpspreadsheet": "^5.0",
+        "pocketarc/codeigniter": "^3.4.9",
+        "spipu/html2pdf": "^5.3",
+        "tecnickcom/tcpdf": "^6.7"
+    },
+    "config": {
+        "platform": {
+            "php": "8.2.0"
+        },
+        "optimize-autoloader": true,
+        "sort-packages": true
     }
 }

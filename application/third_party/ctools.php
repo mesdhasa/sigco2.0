@@ -161,28 +161,28 @@ $el = intval($valeur);
 return $mois;
 }
 function chaineVersDate($chaine){
-$el = explode(" ",$chaine);
+$el = explode(" ", (string) $chaine);
 $chaine = $el[0];
 if ($chaine == "") $chaine = "00/00/0000";
-$valeur = explode("/", $chaine);
+$valeur = explode("/", (string) $chaine);
 return
 $valeur[2]."-".$valeur[1]."-".$valeur[0];
 }
 
 function dateVersChaine($chaine){
-$el = explode(" ",$chaine);
+$el = explode(" ", (string) $chaine);
 $chaine = $el[0];
 if ($chaine == "") $chaine = "0000-00-00";
-$valeur = explode("-", $chaine);
+$valeur = explode("-", (string) $chaine);
 return
 $valeur[2]."/".$valeur[1]."/".$valeur[0];
 }
 
 function dateVersChainetext($chaine){
-$el = explode(" ",$chaine);
+$el = explode(" ", (string) $chaine);
 $chaine = $el[0];
 if ($chaine == "") $chaine = "0000-00-00";
-$valeur = explode("-", $chaine);
+$valeur = explode("-", (string) $chaine);
 return
 $valeur[2]."-".mois($valeur[1])."-".$valeur[0];
 }

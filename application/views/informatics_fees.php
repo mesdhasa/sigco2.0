@@ -34,7 +34,7 @@ require_once('tete.php'); ?>
 					<span class="input-group-btn">
 						<!-- <select class="form-control" name="compagnie" required>
 						<option value="">---- Compagnie ----</option>
-						<?php foreach($compagnie as $row){?>
+						<?php foreach((isset($compagnie) ? $compagnie : array()) as $row){?>
 						<option value="<?php echo $row->idcompagnie?>"><?php echo strtoupper($row->compagnie)?></option>
 
 						<?php }?>

@@ -87,14 +87,14 @@ if(isset($_SESSION['sesnumber'])){
 
 												<tr class="success">
 													<td class="center"><?php echo $r;?></td>
-													<td class="center"><?php echo $row->awbl;?></td>
-													<td class="center"><?php echo $row->qty;?></td>
-													<td class="left"><?php echo $row->package;?></td>
-													<td class="left"><?php echo $row->consignee;?></td>
-													<td class="center"><?php echo $row->weight;?></td>
-													<td class="center"><?php echo $row->freight;?></td>
-													<td class="center"><?php echo $row->weight_charge;?></td>
-													<td class="center"><?php echo $row->currency;?></td>
+													<td class="center"><?php echo e($row->awbl);?></td>
+													<td class="center"><?php echo e($row->qty);?></td>
+													<td class="left"><?php echo e($row->package);?></td>
+													<td class="left"><?php echo e($row->consignee);?></td>
+													<td class="center"><?php echo e($row->weight);?></td>
+													<td class="center"><?php echo e($row->freight);?></td>
+													<td class="center"><?php echo e($row->weight_charge);?></td>
+													<td class="center"><?php echo e($row->currency);?></td>
 													<td class="center">
 													<?php if($row->prepaid=="1"){?>
 													<i class="fa fa-check" aria-hidden="true"></i>
@@ -121,14 +121,14 @@ if(isset($_SESSION['sesnumber'])){
 
 											<tr>
 												<td class="center"><?php echo $r;?></td>
-												<td class="center"><?php echo $row->awbl;?></td>
-												<td class="center"><?php echo $row->qty;?></td>
-												<td class="left"><?php echo $row->package;?></td>
-												<td class="left"><?php echo $row->consignee;?></td>
-												<td class="center"><?php echo $row->weight;?></td>
-												<td class="center"><?php echo $row->freight;?></td>
-												<td class="center"><?php echo $row->weight_charge;?></td>
-												<td class="center"><?php echo $row->currency;?></td>
+												<td class="center"><?php echo e($row->awbl);?></td>
+												<td class="center"><?php echo e($row->qty);?></td>
+												<td class="left"><?php echo e($row->package);?></td>
+												<td class="left"><?php echo e($row->consignee);?></td>
+												<td class="center"><?php echo e($row->weight);?></td>
+												<td class="center"><?php echo e($row->freight);?></td>
+												<td class="center"><?php echo e($row->weight_charge);?></td>
+												<td class="center"><?php echo e($row->currency);?></td>
 												<td class="center">
 												<?php if($row->prepaid=="1"){?>
 												<i class="fa fa-check" aria-hidden="true"></i>

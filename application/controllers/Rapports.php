@@ -4,7 +4,44 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
 
 
-class Rapports extends CI_Controller {
+/**
+ * Controle d'acces cote serveur (Bloc 02 - AUDIT-002/003/007, voir MY_Controller).
+ * Rapports : a31 storage, a32 revenus, a17 rapports hebdomadaires / commissions / due agent (comme les vues).
+ */
+class Rapports extends MY_Controller {
+
+	protected $acces_defaut = NULL;
+
+	protected $acces = array(
+		'index' => self::SESSION,
+		'depot' => 'a31',
+		'larecherche' => 'a31',
+		'droit_depot_awb_pdf' => 'a31',
+		'droit_depot_pdf_total' => 'a31',
+		'revenue_report' => 'a32',
+		'rec_revenue_report' => 'a32',
+		'revenue_report_pdf_total' => 'a32',
+		'weekly_search' => 'a17',
+		'weekly_search2' => 'a17',
+		'weekly_search_pdf' => 'a17',
+		'weekly_search_pdf2' => 'a17',
+		'commission_weight_search' => 'a17',
+		'commission_weight_search2' => 'a17',
+		'commission_weight_search_pdf1' => 'a17',
+		'commission_weight_search_pdf2' => 'a17',
+		'commission_weight_search_excel' => 'a17',
+		'commission_weight_search_excel2' => 'a17',
+		'commission_fees_search' => 'a17',
+		'commission_fees_search2' => 'a17',
+		'savecheck' => 'a17',
+		'commission_handling_pdf1' => 'a17',
+		'DueAgent' => 'a17',
+		'RecherDueAgent' => 'a17',
+		'RecherDueAgentPdf' => 'a17',
+	);
+
+	protected $post_requis = array();
+
 
 public function index()
 {
@@ -250,8 +287,8 @@ public function commission_weight_search_excel()
 		$spreadsheet = new Spreadsheet(); // instantiate Spreadsheet
 
         $sheet = $spreadsheet->getActiveSheet();
-		$range1=A1;
-		$range2=O1;
+		$range1='A1';
+		$range2='O1';
         // manually set table data value
 		$spreadsheet->getActiveSheet()
             ->getStyle("$range1:$range2")
@@ -271,25 +308,26 @@ public function commission_weight_search_excel()
 		$spreadsheet->getActiveSheet()->mergeCells("$range1:$range2");
 		$spreadsheet->getActiveSheet()->getStyle("$range1:$range1")->getAlignment()->setHorizontal('center');
 		$spreadsheet->getActiveSheet()->getStyle(2)->getAlignment()->setHorizontal('center');
-	    $spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(1, 1, "COMMISSION ON WEIGHT CHARGES (Inbound)" .dateVersChainetext($date1) .",au,". dateVersChainetext($date2)); 
-	    $spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(1, 2, "Date");    
-		$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(2, 2, "AWB #");
-		$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(3, 2, "Orig");
-		$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(4, 2, "Wt/Ch");
-		$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(5, 2, "$per %");	
-		$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(6, 2, "REMARKS");    
+	    $spreadsheet->getActiveSheet()->setCellValue([1, 1], "COMMISSION ON WEIGHT CHARGES (Inbound)" .dateVersChainetext($date1) .",au,". dateVersChainetext($date2)); 
+	    $spreadsheet->getActiveSheet()->setCellValue([1, 2], "Date");    
+		$spreadsheet->getActiveSheet()->setCellValue([2, 2], "AWB #");
+		$spreadsheet->getActiveSheet()->setCellValue([3, 2], "Orig");
+		$spreadsheet->getActiveSheet()->setCellValue([4, 2], "Wt/Ch");
+		$spreadsheet->getActiveSheet()->setCellValue([5, 2], "$per %");	
+		$spreadsheet->getActiveSheet()->setCellValue([6, 2], "REMARKS");    
 	    $i=2;
+	    $c=0;
 
 	    foreach($data['lessegments'] as $rs){$i++;
 			$b=($rs->weight_charge*trim($per)/100);
 			$c+=$b;
-	$spreadsheet->getActiveSheet()->getStyle($i)->getAlignment()->setHorizontal('center');
-	$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(1, $i, dateVersChainetext($rs->Date_of_arrival));    
-	$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(2, $i, $rs->awbl);
-	$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(3, $i, $rs->Place_of_departure_code);
-	$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(4, $i, $rs->weight_charge);
-	$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(5, $i, round($b,2));	
-	$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(6, $i, $rs->remarque2);
+	$spreadsheet->getActiveSheet()->getStyle($i.':'.$i)->getAlignment()->setHorizontal('center');
+	$spreadsheet->getActiveSheet()->setCellValue([1, $i], dateVersChainetext($rs->Date_of_arrival));    
+	$spreadsheet->getActiveSheet()->setCellValue([2, $i], $rs->awbl);
+	$spreadsheet->getActiveSheet()->setCellValue([3, $i], $rs->Place_of_departure_code);
+	$spreadsheet->getActiveSheet()->setCellValue([4, $i], $rs->weight_charge);
+	$spreadsheet->getActiveSheet()->setCellValue([5, $i], round($b,2));	
+	$spreadsheet->getActiveSheet()->setCellValue([6, $i], $rs->remarque2);
 	    
 	    }
 		$z=$i+1;
@@ -301,8 +339,8 @@ public function commission_weight_search_excel()
 		$range4="C".$z;;
 		$spreadsheet->getActiveSheet()->getStyle("$range3:$range4")->getAlignment()->setHorizontal('center');
 		$spreadsheet->getActiveSheet()->mergeCells("$range3:$range4");
-		$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(1, $z, "Total"); 
-		$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(5, $z, 	round($c,2)); 
+		$spreadsheet->getActiveSheet()->setCellValue([1, $z], "Total"); 
+		$spreadsheet->getActiveSheet()->setCellValue([5, $z], round($c,2)); 
 
 
         $writer = new Xls($spreadsheet); // instantiate Xlsx
@@ -343,8 +381,8 @@ public function commission_weight_search_excel2()
 		$spreadsheet = new Spreadsheet(); // instantiate Spreadsheet
 
         $sheet = $spreadsheet->getActiveSheet();
-		$range1=A1;
-		$range2=O1;
+		$range1='A1';
+		$range2='O1';
         // manually set table data value
 		$spreadsheet->getActiveSheet()
             ->getStyle("$range1:$range2")
@@ -364,14 +402,15 @@ public function commission_weight_search_excel2()
 		$spreadsheet->getActiveSheet()->mergeCells("$range1:$range2");
 		$spreadsheet->getActiveSheet()->getStyle("$range1:$range1")->getAlignment()->setHorizontal('center');
 		$spreadsheet->getActiveSheet()->getStyle(2)->getAlignment()->setHorizontal('center');
-	    $spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(1, 1, "COMMISSION ON WEIGHT CHARGES (Outbound)" .dateVersChainetext($date1) .",au,". dateVersChainetext($date2)); 
-	    $spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(1, 2, "Date");    
-		$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(2, 2, "AWB #");
-		$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(3, 2, "Dest");
-		$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(4, 2, "Wt/Ch");
-		$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(5, 2, "$per %");	
-		$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(6, 2, "REMARKS");    
+	    $spreadsheet->getActiveSheet()->setCellValue([1, 1], "COMMISSION ON WEIGHT CHARGES (Outbound)" .dateVersChainetext($date1) .",au,". dateVersChainetext($date2)); 
+	    $spreadsheet->getActiveSheet()->setCellValue([1, 2], "Date");    
+		$spreadsheet->getActiveSheet()->setCellValue([2, 2], "AWB #");
+		$spreadsheet->getActiveSheet()->setCellValue([3, 2], "Dest");
+		$spreadsheet->getActiveSheet()->setCellValue([4, 2], "Wt/Ch");
+		$spreadsheet->getActiveSheet()->setCellValue([5, 2], "$per %");	
+		$spreadsheet->getActiveSheet()->setCellValue([6, 2], "REMARKS");    
 	    $i=2;
+	    $c=0;
 
 	    foreach($data['lessegments'] as $rs){$i++;
 			if($rs->void=="1"){
@@ -384,13 +423,13 @@ public function commission_weight_search_excel2()
 				 } 
 				 $b=($weight*trim($this->uri->segment(5))/100);
 				 $c+=$b;
-	$spreadsheet->getActiveSheet()->getStyle($i)->getAlignment()->setHorizontal('center');
-	$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(1, $i, dateVersChainetext($rs->date));    
-	$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(2, $i, $rs->awb_number);
-	$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(3, $i, $rs->route_to1);
-	$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(4, $i, round($weight,2));
-	$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(5, $i, round($b,2));	
-	$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(6, $i, $rs->remarque2);
+	$spreadsheet->getActiveSheet()->getStyle($i.':'.$i)->getAlignment()->setHorizontal('center');
+	$spreadsheet->getActiveSheet()->setCellValue([1, $i], dateVersChainetext($rs->date));    
+	$spreadsheet->getActiveSheet()->setCellValue([2, $i], $rs->awb_number);
+	$spreadsheet->getActiveSheet()->setCellValue([3, $i], $rs->route_to1);
+	$spreadsheet->getActiveSheet()->setCellValue([4, $i], round($weight,2));
+	$spreadsheet->getActiveSheet()->setCellValue([5, $i], round($b,2));	
+	$spreadsheet->getActiveSheet()->setCellValue([6, $i], $rs->remarque2);
 				}
 	    }
 		$z=$i+1;
@@ -402,8 +441,8 @@ public function commission_weight_search_excel2()
 		$range4="C".$z;;
 		$spreadsheet->getActiveSheet()->getStyle("$range3:$range4")->getAlignment()->setHorizontal('center');
 		$spreadsheet->getActiveSheet()->mergeCells("$range3:$range4");
-		$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(1, $z, "Total"); 
-		$spreadsheet->getActiveSheet()->setCellValueByColumnAndRow(5, $z, 	round($c,2)); 
+		$spreadsheet->getActiveSheet()->setCellValue([1, $z], "Total"); 
+		$spreadsheet->getActiveSheet()->setCellValue([5, $z], round($c,2)); 
 
 
         $writer = new Xls($spreadsheet); // instantiate Xlsx

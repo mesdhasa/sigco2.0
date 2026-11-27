@@ -9,8 +9,8 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 
 		<!-- bootstrap & fontawesome -->
-		<link rel="stylesheet" href="<?php echo base_url()?>assets/css/bootstrap.min.css" />
-		<link rel="stylesheet" href="<?php echo base_url()?>assets/font-awesome/4.5.0/css/font-awesome.min.css" />
+		<link rel="stylesheet" href="<?php echo base_url()?>assets/css/bootstrap-3.4.1.min.css" />
+		<link rel="stylesheet" href="<?php echo base_url()?>assets/font-awesome/4.7.0/css/font-awesome.min.css" />
 
 		<!-- text fonts -->
 		<link rel="stylesheet" href="<?php echo base_url()?>assets/css/fonts.googleapis.com.css" />
@@ -132,12 +132,17 @@
 		<!-- basic scripts -->
 
 		<!--[if !IE]> -->
-		<script src="<?php echo base_url()?>assets/js/jquery-2.1.4.min.js"></script>
+		<script src="<?php echo base_url()?>assets/js/jquery-3.8.0.min.js"></script>
+	<script src="<?php echo base_url()?>assets/js/jquery-migrate-3.6.0.min.js"></script>
+	<?php $sigco_ci =& get_instance(); ?>
+	<script>window.SIGCO_CSRF = {nom: <?php echo json_encode($sigco_ci->security->get_csrf_token_name())?>, valeur: <?php echo json_encode($sigco_ci->security->get_csrf_hash())?>};</script>
+	<script src="<?php echo base_url()?>assets/js/sigco-securite.js"></script>
+
 
 		<!-- <![endif]-->
 
 		<!--[if IE]>
-<script src="assets/js/jquery-1.11.3.min.js"></script>
+<script src="assets/js/jquery-3.8.0.min.js"></script>
 <![endif]-->
 		<script type="text/javascript">
 			if('ontouchstart' in document.documentElement) document.write("<script src='assets/js/jquery.mobile.custom.min.js'>"+"<"+"/script>");

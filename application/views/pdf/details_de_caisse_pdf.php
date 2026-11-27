@@ -1,4 +1,8 @@
 <?php
+// Compatibilite PHP 8 (Bloc 02) : initialisations implicites en PHP 7, obligatoires en PHP 8
+isset($sum_tab) OR $sum_tab = array();
+isset($sum_tab['id']) OR $sum_tab['id'] = array();
+?><?php
 $content = "
 <style>
 table {
@@ -65,7 +69,7 @@ font-size: 15px;
 <page backtop=\"5mm\" backbottom=\"5mm\" backleft=\"10mm\" backright=\"2mm\" footer=\"page\">
 <span class='span1'>MESDHASA</span><br/>
 <span class='span2'>Details caisse </span><br/>
-<span  class='span2'><p>".dateVersChainetext($this->uri->segment(3))." ".au." ".dateVersChainetext($this->uri->segment(4))."<br/><br/> </p></span>
+<span  class='span2'><p>".dateVersChainetext($this->uri->segment(3))." au ".dateVersChainetext($this->uri->segment(4))."<br/><br/> </p></span>
 <table>
 <thead>
 <tr>
@@ -151,22 +155,22 @@ $sum_tab['storage_fees_htg'][$rs->idcompagnie][]=$rs->montant_hc;
 }
 
 $color = ""; foreach($lessegments2 as $rs){$i++;
-  if (!in_array($rs->idcompagnie,$sum_tab['id'])) {
-    $sum_tab['compagnie'][$rs->idcompagnie]= $rs->compagnie;
-    $sum_tab['id'][]= $rs->idcompagnie;
+  if (!in_array(($rs->idcompagnie ?? NULL),$sum_tab['id'])) {
+    $sum_tab['compagnie'][($rs->idcompagnie ?? NULL)]= $rs->compagnie;
+    $sum_tab['id'][]= ($rs->idcompagnie ?? NULL);
   }
   
   if (trim($rs->description)=='Other charges due agent' and $rs->monnaie=='USD') {
-  $sum_tab['due_agent_fees_usd'][$rs->idcompagnie][]=$rs->montant_hc;
+  $sum_tab['due_agent_fees_usd'][($rs->idcompagnie ?? NULL)][]=$rs->montant_hc;
   }
   if (trim($rs->description)=='Other charges due agent' and $rs->monnaie=='HTG') {
-  $sum_tab['due_agent_fees_htg'][$rs->idcompagnie][]=$rs->montant_hc;
+  $sum_tab['due_agent_fees_htg'][($rs->idcompagnie ?? NULL)][]=$rs->montant_hc;
   }
   if ((trim($rs->description)=='Weight charge' or trim($rs->description)=='Other charges due carrier') and $rs->monnaie=='USD') {
-    $sum_tab['freight2_usd'][$rs->idcompagnie][]=$rs->montant_hc;
+    $sum_tab['freight2_usd'][($rs->idcompagnie ?? NULL)][]=$rs->montant_hc;
     }
     if ((trim($rs->description)=='Weight charge' or trim($rs->description)=='Other charges due carrier') and $rs->monnaie=='HTG') {
-      $sum_tab['freight2_htg'][$rs->idcompagnie][]=$rs->montant_hc;
+      $sum_tab['freight2_htg'][($rs->idcompagnie ?? NULL)][]=$rs->montant_hc;
       }
       if ($rs->monnaie == "USD"){
         $content .= "<tr  class='color4'  >
@@ -225,33 +229,33 @@ $sum_total_storage_fees_htg=0;
 $sum_total_due_agent_fees_usd=0;
 $sum_total_due_agent_fees_htg=0;
 
-for ($a = 0; $a < count($sum_tab['id']); $a++) {
+for ($a = 0; $a < sigco_count($sum_tab['id']); $a++) {
 
-$sum_total_air_fees_usd+=array_sum ($sum_tab['air_fees_usd'][$sum_tab['id'][$a]]);
-$sum_total_air_fees_htg+=array_sum ($sum_tab['air_fees_htg'][$sum_tab['id'][$a]]);
-$sum_total_info_fees_usd+=array_sum ($sum_tab['info_fees_usd'][$sum_tab['id'][$a]]);
-$sum_total_info_fees_htg+=array_sum ($sum_tab['info_fees_htg'][$sum_tab['id'][$a]]);
-$sumfreight_usd=(array_sum ($sum_tab['freight_usd'][$sum_tab['id'][$a]]))+(array_sum ($sum_tab['freight2_usd'][$sum_tab['id'][$a]]));
-$sumfreight_htg=(array_sum ($sum_tab['freight_htg'][$sum_tab['id'][$a]]))+(array_sum ($sum_tab['freight2_htg'][$sum_tab['id'][$a]]));
+$sum_total_air_fees_usd+=sigco_array_sum($sum_tab['air_fees_usd'][$sum_tab['id'][$a]]);
+$sum_total_air_fees_htg+=sigco_array_sum($sum_tab['air_fees_htg'][$sum_tab['id'][$a]]);
+$sum_total_info_fees_usd+=sigco_array_sum($sum_tab['info_fees_usd'][$sum_tab['id'][$a]]);
+$sum_total_info_fees_htg+=sigco_array_sum($sum_tab['info_fees_htg'][$sum_tab['id'][$a]]);
+$sumfreight_usd=(sigco_array_sum($sum_tab['freight_usd'][$sum_tab['id'][$a]]))+(sigco_array_sum($sum_tab['freight2_usd'][$sum_tab['id'][$a]]));
+$sumfreight_htg=(sigco_array_sum($sum_tab['freight_htg'][$sum_tab['id'][$a]]))+(sigco_array_sum($sum_tab['freight2_htg'][$sum_tab['id'][$a]]));
 
 $sum_total_freight_usd+=$sumfreight_usd;
 $sum_total_freight_htg+=$sumfreight_htg;
-$sum_total_storage_fees_usd+=array_sum ($sum_tab['storage_fees_usd'][$sum_tab['id'][$a]]);
-$sum_total_storage_fees_htg+=array_sum ($sum_tab['storage_fees_htg'][$sum_tab['id'][$a]]);
-$sum_total_due_agent_fees_usd+=array_sum ($sum_tab['due_agent_fees_usd'][$sum_tab['id'][$a]]);
-$sum_total_due_agent_fees_htg+=array_sum ($sum_tab['due_agent_fees_htg'][$sum_tab['id'][$a]]);
+$sum_total_storage_fees_usd+=sigco_array_sum($sum_tab['storage_fees_usd'][$sum_tab['id'][$a]]);
+$sum_total_storage_fees_htg+=sigco_array_sum($sum_tab['storage_fees_htg'][$sum_tab['id'][$a]]);
+$sum_total_due_agent_fees_usd+=sigco_array_sum($sum_tab['due_agent_fees_usd'][$sum_tab['id'][$a]]);
+$sum_total_due_agent_fees_htg+=sigco_array_sum($sum_tab['due_agent_fees_htg'][$sum_tab['id'][$a]]);
 $content .= "<tr  class=\"color\" >
 <td  class='color2'  align='center'>".$sum_tab['compagnie'][$sum_tab['id'][$a]]."</td>
-<td  class='color4' align='center'>".array_sum ($sum_tab['air_fees_usd'][$sum_tab['id'][$a]])."</td>
-<td  class='color5' align='center'>".array_sum ($sum_tab['air_fees_htg'][$sum_tab['id'][$a]])."</td>
-<td  class='color4' align='center'>".array_sum ($sum_tab['info_fees_usd'][$sum_tab['id'][$a]])."</td>
-<td  class='color5'  align='center'>".array_sum ($sum_tab['info_fees_htg'][$sum_tab['id'][$a]])."</td>
+<td  class='color4' align='center'>".sigco_array_sum($sum_tab['air_fees_usd'][$sum_tab['id'][$a]])."</td>
+<td  class='color5' align='center'>".sigco_array_sum($sum_tab['air_fees_htg'][$sum_tab['id'][$a]])."</td>
+<td  class='color4' align='center'>".sigco_array_sum($sum_tab['info_fees_usd'][$sum_tab['id'][$a]])."</td>
+<td  class='color5'  align='center'>".sigco_array_sum($sum_tab['info_fees_htg'][$sum_tab['id'][$a]])."</td>
 <td  class='color4' align='center'>".$sumfreight_usd."</td>
 <td  class='color5'  align='center'>".$sumfreight_htg."</td>
-<td  class='color4' align='center'>".array_sum ($sum_tab['storage_fees_usd'][$sum_tab['id'][$a]])."</td>
-<td  class='color5'  align='center'>".array_sum ($sum_tab['storage_fees_htg'][$sum_tab['id'][$a]])."</td>
-<td  class='color4' align='center'>".array_sum ($sum_tab['due_agent_fees_usd'][$sum_tab['id'][$a]])."</td>
-<td  class='color5'  align='center'>".array_sum ($sum_tab['due_agent_fees_htg'][$sum_tab['id'][$a]])."</td>
+<td  class='color4' align='center'>".sigco_array_sum($sum_tab['storage_fees_usd'][$sum_tab['id'][$a]])."</td>
+<td  class='color5'  align='center'>".sigco_array_sum($sum_tab['storage_fees_htg'][$sum_tab['id'][$a]])."</td>
+<td  class='color4' align='center'>".sigco_array_sum($sum_tab['due_agent_fees_usd'][$sum_tab['id'][$a]])."</td>
+<td  class='color5'  align='center'>".sigco_array_sum($sum_tab['due_agent_fees_htg'][$sum_tab['id'][$a]])."</td>
 </tr>";
 }
 $content .= "<tr  class=\"color\" >
@@ -285,9 +289,9 @@ $sum_total_htg=$sum_total_air_fees_htg+$sum_total_info_fees_htg+$sum_total_freig
 
 
 
-for ($a = 0; $a < count($sum_tab['id']); $a++) {
-$sum_usd=(array_sum ($sum_tab['air_fees_usd'][$sum_tab['id'][$a]]))+(array_sum ($sum_tab['info_fees_usd'][$sum_tab['id'][$a]]))+(array_sum ($sum_tab['freight_usd'][$sum_tab['id'][$a]]))+(array_sum ($sum_tab['freight2_usd'][$sum_tab['id'][$a]]))+(array_sum ($sum_tab['storage_fees_usd'][$sum_tab['id'][$a]]))+(array_sum ($sum_tab['due_agent_fees_usd'][$sum_tab['id'][$a]]));
-$sumf_htg=(array_sum ($sum_tab['air_fees_htg'][$sum_tab['id'][$a]]))+(array_sum ($sum_tab['info_fees_htg'][$sum_tab['id'][$a]]))+(array_sum ($sum_tab['freight_htg'][$sum_tab['id'][$a]]))+(array_sum ($sum_tab['freight2_htg'][$sum_tab['id'][$a]]))+(array_sum ($sum_tab['storage_fees_htg'][$sum_tab['id'][$a]]))+(array_sum ($sum_tab['due_agent_fees_htg'][$sum_tab['id'][$a]]));
+for ($a = 0; $a < sigco_count($sum_tab['id']); $a++) {
+$sum_usd=(sigco_array_sum($sum_tab['air_fees_usd'][$sum_tab['id'][$a]]))+(sigco_array_sum($sum_tab['info_fees_usd'][$sum_tab['id'][$a]]))+(sigco_array_sum($sum_tab['freight_usd'][$sum_tab['id'][$a]]))+(sigco_array_sum($sum_tab['freight2_usd'][$sum_tab['id'][$a]]))+(sigco_array_sum($sum_tab['storage_fees_usd'][$sum_tab['id'][$a]]))+(sigco_array_sum($sum_tab['due_agent_fees_usd'][$sum_tab['id'][$a]]));
+$sumf_htg=(sigco_array_sum($sum_tab['air_fees_htg'][$sum_tab['id'][$a]]))+(sigco_array_sum($sum_tab['info_fees_htg'][$sum_tab['id'][$a]]))+(sigco_array_sum($sum_tab['freight_htg'][$sum_tab['id'][$a]]))+(sigco_array_sum($sum_tab['freight2_htg'][$sum_tab['id'][$a]]))+(sigco_array_sum($sum_tab['storage_fees_htg'][$sum_tab['id'][$a]]))+(sigco_array_sum($sum_tab['due_agent_fees_htg'][$sum_tab['id'][$a]]));
 
 $content .= "<tr  class=\"color\" >
 <td   align='center'>".$sum_tab['compagnie'][$sum_tab['id'][$a]]."</td>

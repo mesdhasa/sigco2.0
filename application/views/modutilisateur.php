@@ -17,6 +17,11 @@ foreach($utilisateur as $rs){}
 							</h1>
 						</div>
 					<div class="page-content">
+<?php if($this->session->flashdata('sms')){?>
+	<div class="alert alert-info"><strong><?php echo $this->session->flashdata('sms');?></strong></div>
+<?php } if($this->session->flashdata('sms2')){?>
+	<div class="alert alert-danger"><strong><?php echo html_escape($this->session->flashdata('sms2'));?></strong></div>
+<?php }?>
 
 						<div class="row">
 							<?php echo form_open('utilisateur/mod_utilisateur');?>
@@ -99,7 +104,7 @@ foreach($utilisateur as $rs){}
 
 
 
-				<a href="<?php echo base_url()?>utilisateur/reset_utilisateur/<?php echo $rs->identreprise?>" onclick="" class="btn btn-sm btn-primary">
+				<a href="javascript:void(0)" onclick="confirmation_lien('G&eacute;n&eacute;rer un mot de passe temporaire pour cet utilisateur ?','<?php echo base_url()?>utilisateur/reset_utilisateur/<?php echo rawurlencode($rs->identreprise)?>')" class="btn btn-sm btn-primary">
 				<i class="ace-icon fa fa-cog"></i>
 				R&eacute;initialiser mot de passe</a>
 <!--

@@ -26,17 +26,16 @@
 				}
 				public function get_all_awb_vol($id)
 				{
-					$sql="SELECT awbl.awb_number,awbl.id_manifeste,awbl.id_awbl,awbl.void,awbl.qty,warehouse.nature_and_quantity,
-					warehouse.gross_weight,awbl.name_shipper,awbl.name_agent,awbl.name_consignee,awbl.total_freight,awbl.rate_Charge,awbl.wt_val,awbl.commdity_item_no,SUM((warehouse_colis.no_pieces*warehouse_colis.dim1*warehouse_colis.dim2*warehouse_colis.dim3)/366) as totalvolum,awbl.currency
-				FROM awbl
+					$sql="SELECT awbl.awb_number, ANY_VALUE(awbl.id_manifeste) AS `id_manifeste`, ANY_VALUE(awbl.id_awbl) AS `id_awbl`, ANY_VALUE(awbl.void) AS `void`, ANY_VALUE(awbl.qty) AS `qty`, ANY_VALUE(warehouse.nature_and_quantity) AS `nature_and_quantity`, ANY_VALUE(warehouse.gross_weight) AS `gross_weight`, ANY_VALUE(awbl.name_shipper) AS `name_shipper`, ANY_VALUE(awbl.name_agent) AS `name_agent`, ANY_VALUE(awbl.name_consignee) AS `name_consignee`, ANY_VALUE(awbl.total_freight) AS `total_freight`, ANY_VALUE(awbl.rate_Charge) AS `rate_Charge`, ANY_VALUE(awbl.wt_val) AS `wt_val`, ANY_VALUE(awbl.commdity_item_no) AS `commdity_item_no`, SUM((warehouse_colis.no_pieces*warehouse_colis.dim1*warehouse_colis.dim2*warehouse_colis.dim3)/366) as totalvolum, ANY_VALUE(awbl.currency) AS `currency`
+					 FROM awbl
 				
 				INNER JOIN warehouse ON (warehouse.no_awbl = awbl.awb_number) 
 				INNER JOIN warehouse_colis ON (warehouse.no_warehouse = warehouse_colis.id_warehouse) 
-				where id_manifeste='$id'  
+				where id_manifeste=?  
 				GROUP BY awbl.awb_number
 				ORDER BY awbl.awb_number ASC";
 				
-				$query = $this->db->query($sql);
+				$query = $this->db->query($sql, array($id));
 				return $query->result();
 
 
@@ -65,6 +64,8 @@
 				// return $query->result();
 
 				
+				// ONLY_FULL_GROUP_BY (MySQL 8/9) : "*" remplace par les colonnes explicites en ANY_VALUE(), resultat identique
+				$this->db->select(sigco_colonnes_any_value(array('awbl', 'warehouse', 'warehouse_colis')), FALSE);
 				$this->db->order_by('awbl.awb_number', 'ASC');
 				$this->db->where('id_manifeste ',$id);
 				$this->db->join('warehouse', 'warehouse.no_awbl = awbl.awb_number','inner');
@@ -491,7 +492,7 @@
 				{
 				$this->db->select('');
 				$this->db->join('compaganie', 'compaganie.idcompagnie = manifeste.idcompagnie','inner');
-				$where = "DATE(date) BETWEEN ". "'" .$date1 . "'" . " AND " . "'" . $date2. "'";
+				$where = "DATE(date) BETWEEN " . $this->db->escape($date1) . " AND " . $this->db->escape($date2);
 				$query = $this->db->where($where)->get('manifeste');
 				return $query->result();
 				}
@@ -859,13 +860,12 @@
 				public function get_all_info_tag($id)
 				{
 
-				$sql="SELECT awbl.awb_number,awbl.commdity_item_no,awbl.route_to1,awbl.route_first_carrier,
-				awbl.flight,awbl.date_flight,awbl.route_to2,awbl.route_by1,warehouse.gross_weight,
-				warehouse.no_warehouse,sum(warehouse_colis.no_pieces) as pieces FROM awbl
+				$sql="SELECT ANY_VALUE(awbl.awb_number) AS `awb_number`, ANY_VALUE(awbl.commdity_item_no) AS `commdity_item_no`, ANY_VALUE(awbl.route_to1) AS `route_to1`, ANY_VALUE(awbl.route_first_carrier) AS `route_first_carrier`, ANY_VALUE(awbl.flight) AS `flight`, ANY_VALUE(awbl.date_flight) AS `date_flight`, ANY_VALUE(awbl.route_to2) AS `route_to2`, ANY_VALUE(awbl.route_by1) AS `route_by1`, ANY_VALUE(warehouse.gross_weight) AS `gross_weight`, ANY_VALUE(warehouse.no_warehouse) AS `no_warehouse`, sum(warehouse_colis.no_pieces) as pieces
+					 FROM awbl
 				INNER JOIN warehouse ON (warehouse.no_awbl = awbl.awb_number) 
 				INNER JOIN warehouse_colis ON (warehouse_colis.id_warehouse=warehouse.no_warehouse) 
-				where awbl.awb_number='$id' ";
-				$query = $this->db->query($sql);
+				where awbl.awb_number=? ";
+				$query = $this->db->query($sql, array($id));
 				return $query->result();
 				}
 			}

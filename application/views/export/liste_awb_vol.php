@@ -68,23 +68,23 @@ if ($row->gross_weight > round($row->totalvolum)){
 							?>
 							<tr>
 								<td class="center"><?php echo $r;?></td>
-								<td class="center"><?php echo $row->awb_number;?></td>
-								<td class="center"><?php echo $row->qty;?></td>
-								<td class="center"><?php echo $row->qty;?></td>
-								<td class="center"><?php echo $row->nature_and_quantity;?></td>
-								<td class="center"><?php echo $row->gross_weight;?></td>
-								<td class="center"><?php echo $row->name_shipper;?></td>
-								<td class="center"><?php echo $row->name_consignee;?></td>
-								<td class="center"><?php echo $row->total_freight;?></td>
+								<td class="center"><?php echo e($row->awb_number);?></td>
+								<td class="center"><?php echo e($row->qty);?></td>
+								<td class="center"><?php echo e($row->qty);?></td>
+								<td class="center"><?php echo e($row->nature_and_quantity);?></td>
+								<td class="center"><?php echo e($row->gross_weight);?></td>
+								<td class="center"><?php echo e($row->name_shipper);?></td>
+								<td class="center"><?php echo e($row->name_consignee);?></td>
+								<td class="center"><?php echo e($row->total_freight);?></td>
 								<td class="center"><?php echo round($weight,2)?></td>
-								<td class="center"><?php echo $row->currency;?></td>
-							<input type="hidden" name="lesid[]" value="<?php echo $row->id_awbl?>">
+								<td class="center"><?php echo e($row->currency);?></td>
+							<input type="hidden" name="lesid[]" value="<?php echo e($row->id_awbl);?>">
 								<td class="center">
 
-							<input type="checkbox" value="<?php echo $row->id_manifeste?>" id="vol_valide<?php echo $row->id_awbl?>" name="vol_valide<?php echo $row->id_awbl?>" <?php if ($row->id_manifeste == true) echo "checked=\"checked\"";?>  class="choixcb">
+							<input type="checkbox" value="<?php echo e($row->id_manifeste);?>" id="vol_valide<?php echo e($row->id_awbl);?>" name="vol_valide<?php echo e($row->id_awbl);?>" <?php if ($row->id_manifeste == true) echo "checked=\"checked\"";?>  class="choixcb">
 							</td>
 						      </tr>
-									<?php $resul_t+=$row->gross_weight; }?>
+									<?php $resul_t+= (float) $row->gross_weight; }?>
 
 		<?php }}?>
 

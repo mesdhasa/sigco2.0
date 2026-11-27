@@ -9,7 +9,8 @@ if(isset($_SESSION['droit']['a16']) and $_SESSION['droit']['a16']=="1"  ) {
 
 
 	<div class="col-lg-12 col-md-6 col-sm-12">
-		<h3>Liste des factures impayées</h3>
+		<h3>Liste des factures impayées <small><?php echo (int) $pagination['total'];?> factures &ndash; page <?php echo (int) $pagination['page'];?> / <?php echo (int) $pagination['pages'];?></small></h3>
+		<?php echo $pagination['liens'];?>
 
 		<div class="table-responsive">
 <table class="table table-striped">
@@ -28,7 +29,7 @@ if(isset($_SESSION['droit']['a16']) and $_SESSION['droit']['a16']=="1"  ) {
     </thead>
     <tbody>
 	<?php
-	$i=0;foreach($lesfactures as $row){$i++;
+	$i=$pagination['offset'];foreach($lesfactures as $row){$i++;
 		$status="Impayée";
 		if(diff_date($row->date,date('Y-m-d')) > 30){
 			$status="<strong>DUE DATE</strong>";
@@ -38,10 +39,10 @@ if(isset($_SESSION['droit']['a16']) and $_SESSION['droit']['a16']=="1"  ) {
       <tr>
         <td><?php echo $i;?></td>
 		<td><?php echo dateverschainetext($row->date);?></td>
-        <td><?php echo $row->nofacture;?></td>
-        <td><?php echo $row->awbl;?></td>
-		<td><?php echo $row->societe;?></td>
-		<td><?php echo $row->package;?></td>
+        <td><?php echo e($row->nofacture);?></td>
+        <td><?php echo e($row->awbl);?></td>
+		<td><?php echo e($row->societe);?></td>
+		<td><?php echo e($row->package);?></td>
 		<td>$<?php echo round($row->balance,2);?> USD</td>
 		<td><?php echo $status;?></td>
       </tr>
@@ -49,6 +50,7 @@ if(isset($_SESSION['droit']['a16']) and $_SESSION['droit']['a16']=="1"  ) {
     </tbody>
   </table>
 </div>
+<?php echo $pagination['liens'];?>
 	</div>
 
 	</div>

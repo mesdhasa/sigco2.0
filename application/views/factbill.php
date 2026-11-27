@@ -13,7 +13,7 @@ $total_poids = 0;
 $res = $this->Parser->get_degroupage($row->awbl);
 if(count($res)>0){
 foreach($res as $r){
-$total_poids += $r->poids;
+$total_poids += (float) $r->poids;
 }
 }
 $sps="";
@@ -386,7 +386,7 @@ Add
 </thead>
 <?php echo form_open('facture/rabais_off/','class="form-inline"');?>
 <tbody>
-<?php $i=0;$total=0;$total2=0;foreach($lespaiements as $pmt){$i++;$total+=$pmt->apayer;$total2+=$pmt->rabais;$rabais=$pmt->idtx;?>
+<?php $i=0;$total=0;$total2=0;foreach($lespaiements as $pmt){$i++;$total+= (float) $pmt->apayer;$total2+= (float) $pmt->rabais;$rabais=$pmt->idtx;?>
 <tr>
 <td><?php echo $i;?></td>
 <td><?php echo $pmt->description?></td>

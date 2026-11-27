@@ -114,7 +114,7 @@ if(isset($_SESSION['sesnumber'])){
 											</thead>
 
 
-											<tbody><?php  if  ( $data['data'] == ""){ ?>
+											<tbody><?php  if  ( ! is_array($data) || $data['data'] == ""){ ?>
 											<?php } else {?>
 												<?php $g=0;foreach ($data['data'] as $row) {$g++;?>
 													<?php if($row->datelivre=="" AND $row->typeawbl=="import") {?>

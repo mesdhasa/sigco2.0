@@ -94,7 +94,7 @@ require_once('tete.php'); ?>
 </div>
 <?php  if (!empty($lessegments)) {?>
 
-	<a class="btn btn-sm btn-primary" target="_blank" href="<?php echo base_url()?>facture/due_agent_pdf/USD/<?php echo chaineVersDate($_POST['date1']);?>/<?php echo chaineVersDate($_POST['date2']);?>/<?php echo $_POST['compagnie'];?>">
+	<a class="btn btn-sm btn-primary" target="_blank" href="<?php echo base_url()?>facture/due_agent_pdf/USD/<?php echo chaineVersDate($_POST['date1']);?>/<?php echo chaineVersDate($_POST['date2']);?>/<?php echo e(isset($_POST['compagnie']) ? $_POST['compagnie'] : '');?>">
 		<i class="ace-icon fa fa-file-pdf-o"></i>
 		Due Agent 
 	</a>

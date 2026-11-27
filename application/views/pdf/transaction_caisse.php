@@ -65,7 +65,7 @@ font-size: 15px;
 <tbody>";
 $a=0;
 	$i = 0;foreach($rapport as $rs){$i++;
-		$a+=$rs->montant_hc;
+		$a+= (float) $rs->montant_hc;
 
 $content .= "<tr  class=\"color\" >
 <td  align='center'>".$i."</td>
@@ -80,7 +80,7 @@ $content .= "<tr  class=\"color\" >
 }
 $b=0;
 foreach($rapport_ex as $rs){$i++;
-  $b+=$rs->montant_hc;
+  $b+= (float) $rs->montant_hc;
   
     $content .= "<tr  class=\"color\" >
     <td  align='center'>".$i."</td>
@@ -98,7 +98,7 @@ foreach($rapport_ex as $rs){$i++;
 
 $c=0;
 foreach($rapport_mes as $rs){$i++;
-  $c+=$rs->montant_hc;
+  $c+= (float) $rs->montant_hc;
 
 $content .= "<tr  class=\"color\" >
 <td  align='center'>".$i."</td>

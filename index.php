@@ -53,7 +53,38 @@
  *
  * NOTE: If you change these, also change the error_reporting() code below
  */
-	define('ENVIRONMENT', isset($_SERVER['CI_ENV']) ? $_SERVER['CI_ENV'] : 'development');
+	/*
+	 * Configuration propre a chaque serveur (secrets, URL, environnement).
+	 * Le fichier application/config/env.php n'est PAS versionne :
+	 * copier application/config/env.example.php et le remplir.
+	 * Sans fichier ni variable CI_ENV, l'application demarre en "production"
+	 * (aucune erreur detaillee affichee).
+	 */
+	$GLOBALS['SIGCO_ENV'] = array();
+	if (is_file(__DIR__.'/application/config/env.php'))
+	{
+		$GLOBALS['SIGCO_ENV'] = (array) require __DIR__.'/application/config/env.php';
+	}
+
+	// Priorite : variable d'environnement SIGCO_<CLE> (serveur, tests), puis env.php, puis valeur par defaut
+	function sigco_env($key, $default = NULL)
+	{
+		$value = getenv('SIGCO_'.strtoupper($key));
+		if ($value !== FALSE)
+		{
+			return $value;
+		}
+		return array_key_exists($key, $GLOBALS['SIGCO_ENV']) ? $GLOBALS['SIGCO_ENV'][$key] : $default;
+	}
+
+	if (isset($_SERVER['CI_ENV']))
+	{
+		define('ENVIRONMENT', $_SERVER['CI_ENV']);
+	}
+	else
+	{
+		define('ENVIRONMENT', sigco_env('environment', 'production'));
+	}
 
 /*
  *---------------------------------------------------------------
@@ -67,21 +98,16 @@ switch (ENVIRONMENT)
 {
 	case 'development':
 		// CI3 + PHP 8.2+ : on masque les avertissements "deprecated"
-		error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+		// SIGCO_DEPRECATIONS=1 : affiche aussi les depreciations PHP (diagnostic de migration PHP)
+		error_reporting(sigco_env('deprecations', FALSE) ? E_ALL : (E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED));
 		ini_set('display_errors', 1);
 	break;
 
 	case 'testing':
 	case 'production':
 		ini_set('display_errors', 0);
-		if (version_compare(PHP_VERSION, '5.3', '>='))
-		{
-			error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT & ~E_USER_NOTICE & ~E_USER_DEPRECATED);
-		}
-		else
-		{
-			error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_USER_NOTICE);
-		}
+		ini_set('log_errors', 1);
+		error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_USER_NOTICE & ~E_USER_DEPRECATED);
 	break;
 
 	default:
@@ -98,7 +124,7 @@ switch (ENVIRONMENT)
  * This variable must contain the name of your "system" directory.
  * Set the path if it is not in the same directory as this file.
  */
-	$system_path = 'system1';
+	$system_path = 'application/vendor/pocketarc/codeigniter/system';
 
 /*
  *---------------------------------------------------------------

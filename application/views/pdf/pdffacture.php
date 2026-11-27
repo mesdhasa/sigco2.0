@@ -615,7 +615,7 @@
         $qte .= $if->qty."<br />";
         $awbl .= $if->awbl."<br />";
         $montant .= round($if->mt-$if->freight);
-        $totalfreight += $if->freight;
+        $totalfreight += (float) $if->freight;
         $montanttotal += round($if->mt,2);
     }
     $numfac = $if->nofacture;

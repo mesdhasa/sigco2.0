@@ -178,7 +178,7 @@ $r=0;  $totalpieces =0; $vo_weight=0;  $totalvolum =0;foreach($antrepot2 as $row
 $t1=round($row->dim1)*round($row->dim2)*round($row->dim3);
 $t2=$t1*$row->no_pieces;
 $vo_weight=$t2/366;
-$totalpieces +=$row->no_pieces;
+$totalpieces += (float) $row->no_pieces;
 
 $totalvolum +=$vo_weight;
 ?>

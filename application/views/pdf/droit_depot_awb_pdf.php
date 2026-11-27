@@ -5,7 +5,7 @@ foreach($awb as $row2){}
   $res = $this->Parser->get_degroupage($row->awb);
   if(count($res)>0){
   foreach($res as $r){
-  $total_poids += $r->poids;
+  $total_poids += (float) $r->poids;
   }
   }
   $datecomp = $row->droitdepot;

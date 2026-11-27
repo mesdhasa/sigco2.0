@@ -1,4 +1,7 @@
 <?php
+// Compatibilite PHP 8 (Bloc 02) : initialisations implicites en PHP 7, obligatoires en PHP 8
+isset($other_charges) OR $other_charges = '';
+?><?php
 /*DATA*/
 if(isset($_SESSION['droit']['a10']) and $_SESSION['droit']['a10']=="1"  ) {
 }else{
@@ -8,20 +11,20 @@ foreach($antrepot as $rs){}
 foreach($awb_data as $data){}
  $totalagent=0; $totalagent1=0;foreach($entitlement_agent as $row4){
    if($row4->type_entitlement=="prepaid"){
-     $totalagent+=$row4->amount;
+     $totalagent+= (float) $row4->amount;
 
      $other_pp="X";
    }else {
-     $totalagent1+=$row4->amount;
+     $totalagent1+= (float) $row4->amount;
      $other_coll="X";
 
    }
   }
   $totalcarrier=0; $totalcarrier1=0;foreach($entitlement_carrier as $row5){
     if($row5->type_entitlement=="prepaid"){
-      $totalcarrier+=$row5->amount;
+      $totalcarrier+= (float) $row5->amount;
     }else {
-      $totalcarrier1+=$row5->amount;
+      $totalcarrier1+= (float) $row5->amount;
 
     }
    }
@@ -31,7 +34,7 @@ foreach($awb_data as $data){}
     $t1=round($row->dim1)*round($row->dim2)*round($row->dim3);
     $t2=$t1*$row->no_pieces;
     $vo_weight=$t2/366;
-    $totalpieces +=$row->no_pieces;
+    $totalpieces += (float) $row->no_pieces;
 
   $totalvolum +=$vo_weight;
   $lb=$rs->gross_weight * 2.20462;
@@ -204,12 +207,12 @@ $other_charges_due_carrier_cc="";
 if (round($weight_charge_pp+$totalagent+$totalcarrier,2)=="0") {
 $total_pp="";
 }else {
-  $total_pp=round($weight_charge_pp+$totalagent+$totalcarrier+$tax_pp+$valuation_charge_pp,2);
+  $total_pp=round((float)$weight_charge_pp+(float)$totalagent+(float)$totalcarrier+(float)$tax_pp+(float)$valuation_charge_pp,2);
 }
 if (round($weight_charge_cc+$totalagent1+$totalcarrier1,2)=="0") {
 $total_cc="";
 }else {
-  $total_cc=round($weight_charge_cc+$totalagent1+$totalcarrier1+$tax_cc+$valuation_charge_cc,2);
+  $total_cc=round((float)$weight_charge_cc+(float)$totalagent1+(float)$totalcarrier1+(float)$tax_cc+(float)$valuation_charge_cc,2);
 }
 if(count($entitlement2)>0){
 

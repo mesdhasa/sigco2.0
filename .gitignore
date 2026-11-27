@@ -8,7 +8,6 @@ application/logs/*
 !application/logs/index.html
 !application/logs/.htaccess
 
-composer.lock
 
 user_guide_src/build/*
 user_guide_src/cilexer/build/*
@@ -31,3 +30,9 @@ user_guide_src/cilexer/pycilexer.egg-info/*
 # Secrets / fichiers locaux
 .ftpconfig
 /www
+
+# Configuration locale (secrets) - voir application/config/env.example.php
+application/config/env.php
+application/cache/sessions/*
+!application/cache/sessions/.htaccess
+!application/cache/sessions/index.html

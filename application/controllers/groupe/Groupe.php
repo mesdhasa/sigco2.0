@@ -1,7 +1,24 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Groupe extends CI_Controller {
+/**
+ * Gestion des groupes de droits (Bloc 02 : AUDIT-002, AUDIT-007, AUDIT-019).
+ * a27 = creer un groupe, a28 = lister / modifier / supprimer.
+ * Personne ne peut modifier ni supprimer son propre groupe ; chaque changement est journalise.
+ */
+class Groupe extends MY_Controller {
+
+	protected $acces = array(
+		'index'          => 'a28',
+		'view'           => 'a28',
+		'modifier'       => 'a28',
+		'supprimer_groupe' => 'a28',
+		'ajouter'        => 'a27',
+		'ajouter_groupe' => 'a27',
+	);
+
+	protected $post_requis = array('modifier', 'ajouter_groupe', 'supprimer_groupe');
+
 	
 	public function index()
 	{
@@ -41,7 +58,8 @@ class Groupe extends CI_Controller {
 	public function modifier()
 	{
 		
-		$id 	= $_POST['id'];
+		$id 	= (string) $this->input->post('id');
+		$this->_interdire_propre_groupe($id);
 		$parent = $_SESSION['account']['parent']; 
 		
 		for($i=1;$i<=100;$i++){
@@ -156,7 +174,9 @@ class Groupe extends CI_Controller {
 		);
 
 
+		$avant = $this->Parser_groupe->get_legroupe($id, $parent);
 		$this->Parser_groupe->set_groupe($data, $id, $parent);
+		$this->_journaliser_droits($id, $avant, $data);
 		$this->session->set_flashdata('sms','Modification effectuée avec succès.');
 				
 		redirect('gestion-groupe-edit/'.$id);
@@ -195,7 +215,9 @@ class Groupe extends CI_Controller {
 	public function supprimer_groupe($id)
 	{
 
+		$this->_interdire_propre_groupe($id);
 		$reponse = $this->Parser_groupe->delete_groupe($id);
+		$this->auth->journaliser('groupe_supprime', $id);
 	
 		$this->session->set_flashdata('sms','Votre groupe est supprimé avec succès.');
 				
@@ -203,4 +225,27 @@ class Groupe extends CI_Controller {
 	}
 	
 	
+private function _interdire_propre_groupe($id)
+	{
+		if ((string) $id === (string) $_SESSION['account']['idgroupe'])
+		{
+			$this->auth->journaliser('acces_refuse', 'Groupe propre', array('groupe' => $id));
+			$this->session->set_flashdata('sms', 'Vous ne pouvez pas modifier ni supprimer votre propre groupe.');
+			redirect('gestion-groupe');
+		}
+	}
+
+	private function _journaliser_droits($id, $avant, $apres)
+	{
+		$avant = isset($avant[0]) ? (array) $avant[0] : array();
+		$diff = array();
+		foreach ($apres as $cle => $valeur)
+		{
+			if (isset($avant[$cle]) && (string) $avant[$cle] !== (string) $valeur)
+			{
+				$diff[$cle] = $avant[$cle].' -> '.$valeur;
+			}
+		}
+		$this->auth->journaliser('groupe_droits_modifies', $id, $diff);
+	}
 }

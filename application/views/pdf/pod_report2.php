@@ -1,4 +1,8 @@
 <?php
+// Compatibilite PHP 8 (Bloc 02) : initialisations implicites en PHP 7, obligatoires en PHP 8
+isset($d) OR $d = 0;
+isset($e) OR $e = 0;
+?><?php
 
 						$date1			= $this->uri->segment(5).'-'.$this->uri->segment(4).'-'.$this->uri->segment(3);
 						$date2		= $this->uri->segment(8).'-'.$this->uri->segment(7).'-'.$this->uri->segment(6);
@@ -54,7 +58,7 @@ font-style: italic;
 <page backtop=\"5mm\" backbottom=\"5mm\" backleft=\"2mm\" backright=\"2mm\" footer=\"page\">
 <span class='span1'>MESDHASA</span><br/>
 <span class='span2'>POD Report</span><br/>
-<span class='span2'>Data:&nbsp;&nbsp;".dateVersChainetext($date1)."&nbsp;".au."&nbsp;".dateVersChainetext($date2)." </span><BR/><BR/>
+<span class='span2'>Data:&nbsp;&nbsp;".dateVersChainetext($date1)."&nbsp;au&nbsp;".dateVersChainetext($date2)." </span><BR/><BR/>
 <table>
 <thead>
 <tr>
@@ -78,8 +82,8 @@ $c=0.00;
 $a=count($leslivraisons)+count($degroup);
 
 $i=0;foreach($leslivraisons as $row){$i++;
-$b+=$row->qtytotal;
-$c+=$row->weight;
+$b+= (float) $row->qtytotal;
+$c+= (float) $row->weight;
 $content .= "<tr  class=\"color\" >
 <td  align='center'>".$i."</td>
 <td align='center'>".dateverschainetext($row->Date_of_arrival)."</td>
@@ -97,7 +101,7 @@ $content .= "<tr  class=\"color\" >
 foreach($degroup as $row2){$i++;
 if ($row2->iddeg!='') {
   $d+="1";
-  $e+=$row2->poids;
+  $e+= (float) $row2->poids;
 $content .= "<tr  class=\"color\" >
 <td  align='center'>".$i."</td>
 <td align='center'>".dateverschainetext($row2->Date_of_arrival)."</td>

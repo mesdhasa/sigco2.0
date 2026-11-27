@@ -73,25 +73,28 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 $active_group = 'default';
 $query_builder = TRUE;
 
+// Identifiants lus dans application/config/env.php (jamais dans le code ni dans Git)
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => 'localhost',
-	// LOCAL (WAMP). Production : 'mesdhasa' / 'ServeurMesd189900.'
-	'username' => 'root',
-	'password' => '',
-	'database' => 'doralyac_mesd',
+	'hostname' => sigco_env('db_hostname', 'localhost'),
+	'port'     => (int) sigco_env('db_port', 3306),
+	'username' => sigco_env('db_username', ''),
+	'password' => sigco_env('db_password', ''),
+	'database' => sigco_env('db_database', ''),
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,
-	'db_debug' => (ENVIRONMENT !== 'production'),
+	// Jamais d'erreur SQL detaillee a l'ecran en production (AUDIT-010)
+	'db_debug' => (ENVIRONMENT === 'development'),
 	'cache_on' => FALSE,
 	'cachedir' => '',
-	'char_set' => 'utf8',
-	'dbcollat' => 'utf8_general_ci',
+	'char_set' => 'utf8mb4',
+	'dbcollat' => 'utf8mb4_general_ci',
 	'swap_pre' => '',
 	'encrypt' => FALSE,
 	'compress' => FALSE,
-	'stricton' => FALSE,
+	// NULL : le mode SQL est fixe explicitement par MY_Controller (config sigco_sql_mode)
+	'stricton' => NULL,
 	'failover' => array(),
-	'save_queries' => TRUE
+	'save_queries' => (ENVIRONMENT === 'development')
 );
