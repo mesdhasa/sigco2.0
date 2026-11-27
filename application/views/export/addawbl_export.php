@@ -7,17 +7,17 @@
   foreach($awb_data as $data){}
    $totalagent=0; $totalagent1=0;foreach($entitlement_agent as $row4){
      if($row4->type_entitlement=="prepaid"){
-       $totalagent+=$row4->amount;
+       $totalagent+= (float) $row4->amount;
      }else {
-       $totalagent1+=$row4->amount;
+       $totalagent1+= (float) $row4->amount;
 
      }
     }
     $totalcarrier=0; $totalcarrier1=0;foreach($entitlement_carrier as $row5){
       if($row5->type_entitlement=="prepaid"){
-        $totalcarrier+=$row5->amount;
+        $totalcarrier+= (float) $row5->amount;
       }else {
-        $totalcarrier1+=$row5->amount;
+        $totalcarrier1+= (float) $row5->amount;
 
       }
      }
@@ -27,7 +27,7 @@
       $t1=round($row->dim1)*round($row->dim2)*round($row->dim3);
       $t2=$t1*$row->no_pieces;
       $vo_weight=$t2/366;
-      $totalpieces +=$row->no_pieces;
+      $totalpieces += (float) $row->no_pieces;
 
     $totalvolum +=$vo_weight;
     $lb=$rs->gross_weight * 2.20462;

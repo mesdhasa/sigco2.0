@@ -491,14 +491,16 @@ class Parser extends CI_Model
 	}
 	public function get_factures_payer($date1, $date2)
 	{
-		$this->db->select('*, sum(apayer), sum(payer), sum(rabais), (sum(apayer) - sum(payer)-sum(rabais)) as balance,tbl_facture.nofacture, tbl_facture.date');
+		// ONLY_FULL_GROUP_BY (MySQL 8/9) : "*" remplace par les colonnes explicites en ANY_VALUE(), resultat identique
+		$this->db->select(sigco_colonnes_any_value(array('tbl_facture', 'tbl_client', 'buil', 'segment', 'compaganie'), array('nofacture', 'date'))
+			.', sum(apayer), sum(payer), sum(rabais), (sum(apayer) - sum(payer)-sum(rabais)) as balance, tbl_facture.nofacture, ANY_VALUE(tbl_facture.date) AS `date`', FALSE);
 		// $this->db->from('tbl_facture');
 		$this->db->join('tbl_client', 'tbl_client.codeclient = tbl_facture.codeclient', 'inner');
 		$this->db->join('buil', 'buil.awbl = tbl_facture.awbl', 'inner');
 		$this->db->join('segment', 'segment.id=buil.segmentid', 'inner');
 		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
 		$this->db->where('awbl_type', 'import');
-		$where = "DATE(tbl_facture.date) BETWEEN " . "'" . $date1 . "'" . " AND " . "'" . $date2 . "'";
+		$where = "DATE(tbl_facture.date) BETWEEN " . $this->db->escape($date1) . " AND " . $this->db->escape($date2);
 		$this->db->group_by('nofacture');
 		$this->db->having('(sum(apayer) - sum(payer) -sum(rabais))=', '0');
 		$this->db->order_by('date', 'ASC');
@@ -517,7 +519,7 @@ class Parser extends CI_Model
 		$this->db->join('segment', 'segment.id=buil.segmentid', 'inner');
 		$this->db->join('tbl_facture', 'tbl_facture.awbl=buil.awbl', 'inner');
 		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
-		$where = "DATE(date_hc) BETWEEN " . "'" . $date1 . "'" . " AND " . "'" . $date2 . "'";
+		$where = "DATE(date_hc) BETWEEN " . $this->db->escape($date1) . " AND " . $this->db->escape($date2);
 		$this->db->where('historique_caisse.description', 'Storage Fees');
 		$this->db->where('tbl_facture.description', 'Storage Fees');
 		$this->db->where('tbl_facture.awbl_type', 'import');
@@ -534,7 +536,7 @@ class Parser extends CI_Model
 		$this->db->join('buil', 'buil.awbl = tbl_facture.awbl', 'inner');
 		$this->db->where('awbl_type', 'import');
 		$this->db->join('segment', 'segment.id=buil.segmentid', 'inner');
-		$this->db->where('datenotification !=', '0000-00-00');
+		$this->db->where('YEAR(datenotification) <>', 0, FALSE); // = "datenotification != '0000-00-00'", valable aussi sous NO_ZERO_DATE (MySQL 8/9)
 		// $this->db->where('datenotification IS NOT NULL');
 		// $this->db->order_by("id", "DESC");
 		// $this->db->like('awbl');
@@ -549,7 +551,7 @@ class Parser extends CI_Model
 		$this->db->select('');
 		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
 		$this->db->order_by("Date_of_arrival", "ASC");
-		$where = "DATE(Date_of_arrival) BETWEEN " . "'" . $date1 . "'" . " AND " . "'" . $date2 . "'";
+		$where = "DATE(Date_of_arrival) BETWEEN " . $this->db->escape($date1) . " AND " . $this->db->escape($date2);
 		$query = $this->db->where($where)->get('segment');
 		return $query->result();
 	}
@@ -562,8 +564,8 @@ class Parser extends CI_Model
 					 INNER JOIN buil as b ON (b.awbl=hc.awb)
 					 INNER JOIN segment as sg ON (sg.id = b.segmentid)
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
-					 where nr.daterapport BETWEEN '$date1' AND '$date2' and b.shot = 0  and b.typeawbl='import'";
-		$query = $this->db->query($sql);
+					 where nr.daterapport BETWEEN ? AND ? and b.shot = 0  and b.typeawbl='import'";
+		$query = $this->db->query($sql, array($date1, $date2));
 		return $query->result();
 	}
 	public function recherche_details_de_caisse2($date1, $date2)
@@ -575,8 +577,8 @@ class Parser extends CI_Model
 					 INNER JOIN manifeste as mn ON (mn.id_manifeste=b.id_manifeste)
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie =mn.idcompagnie)
 					 INNER JOIN buil as b2 ON (b2.awbl=hc.awb)
-					 where nr.daterapport BETWEEN '$date1' AND '$date2' and b2.shot = 0  and b2.typeawbl='export'";
-		$query = $this->db->query($sql);
+					 where nr.daterapport BETWEEN ? AND ? and b2.shot = 0  and b2.typeawbl='export'";
+		$query = $this->db->query($sql, array($date1, $date2));
 		return $query->result();
 	}
 	public function recherche_informatics_fees($date1, $date2)
@@ -587,8 +589,8 @@ class Parser extends CI_Model
 					 INNER JOIN buil as b ON (b.awbl=hc.awb)
 					 INNER JOIN segment as sg ON (sg.id = b.segmentid)
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
-					 where nr.daterapport BETWEEN '$date1' AND '$date2' and b.shot = 0 and sg.Voyage_number and hc.description='Redevance informatiques' ";
-		$query = $this->db->query($sql);
+					 where nr.daterapport BETWEEN ? AND ? and b.shot = 0 and sg.Voyage_number and hc.description='Redevance informatiques' ";
+		$query = $this->db->query($sql, array($date1, $date2));
 		return $query->result();
 	}
 
@@ -600,18 +602,18 @@ class Parser extends CI_Model
 					 INNER JOIN buil as b ON (b.awbl=hc.awb)
 					 INNER JOIN segment as sg ON (sg.id = b.segmentid)
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
-					 where nr.daterapport BETWEEN '$date1' AND '$date2' and b.shot = 0 and hc.description='Airport Fees'";
-		$query = $this->db->query($sql);
+					 where nr.daterapport BETWEEN ? AND ? and b.shot = 0 and hc.description='Airport Fees'";
+		$query = $this->db->query($sql, array($date1, $date2));
 		return $query->result();
 	}
 	public function recherche_freight($date1, $date2)
 	{
-		$sql = "SELECT hc.awb, nr.num,hc.monnaie,hc.description, hc.montant_hc,b.prepaid,b.collect,b.nocharge, SUM(hc.montant_hc) AS totalF
+		$sql = "SELECT hc.awb, ANY_VALUE(nr.num) AS `num`, hc.monnaie, ANY_VALUE(hc.description) AS `description`, ANY_VALUE(hc.montant_hc) AS `montant_hc`, ANY_VALUE(b.prepaid) AS `prepaid`, ANY_VALUE(b.collect) AS `collect`, ANY_VALUE(b.nocharge) AS `nocharge`, SUM(hc.montant_hc) AS totalF
 					 FROM historique_caisse as hc
 					 INNER JOIN norapport as nr ON (nr.num=hc.norapport )
 					 INNER JOIN buil as b ON (b.awbl=hc.awb)
-					 where nr.daterapport BETWEEN '$date1' AND '$date2' and b.shot = 0 and (hc.description='Freight' or hc.description='Other charges due carrier' or hc.description='Weight charge ') GROUP BY hc.awb, hc.monnaie";
-		$query = $this->db->query($sql);
+					 where nr.daterapport BETWEEN ? AND ? and b.shot = 0 and (hc.description='Freight' or hc.description='Other charges due carrier' or hc.description='Weight charge ') GROUP BY hc.awb, hc.monnaie";
+		$query = $this->db->query($sql, array($date1, $date2));
 		return $query->result();
 	}
 	public function recherche_import_fees2($date1, $date2, $currency)
@@ -622,8 +624,8 @@ class Parser extends CI_Model
 					 INNER JOIN buil as b ON (b.awbl=hc.awb)
 					 INNER JOIN segment as sg ON (sg.id = b.segmentid)
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
-					 where nr.daterapport BETWEEN '$date1' AND '$date2' and b.shot = 0 and hc.description='Airport Fees' and hc.monnaie='$currency' ";
-		$query = $this->db->query($sql);
+					 where nr.daterapport BETWEEN ? AND ? and b.shot = 0 and hc.description='Airport Fees' and hc.monnaie=? ";
+		$query = $this->db->query($sql, array($date1, $date2, $currency));
 		return $query->result();
 	}
 	public function recherche_freight2($date1, $date2, $currency)
@@ -632,8 +634,8 @@ class Parser extends CI_Model
 					 FROM norapport as nr
 					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
 					 INNER JOIN buil as b ON (b.awbl=hc.awb)
-					 where nr.daterapport BETWEEN '$date1' AND '$date2' and b.shot = 0 and hc.description='Freight' or hc.description='Other charges due carrier' or hc.description='Weight charge ' and hc.monnaie='$currency' ";
-		$query = $this->db->query($sql);
+					 where nr.daterapport BETWEEN ? AND ? and b.shot = 0 and hc.description='Freight' or hc.description='Other charges due carrier' or hc.description='Weight charge ' and hc.monnaie=? ";
+		$query = $this->db->query($sql, array($date1, $date2, $currency));
 		return $query->result();
 	}
 	public function recherche_due_agent($date1, $date2, $compagnie)
@@ -645,8 +647,8 @@ class Parser extends CI_Model
 					 INNER JOIN manifeste as mn ON (mn.id_manifeste=b.id_manifeste)
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie =mn.idcompagnie)
 					 INNER JOIN buil as b2 ON (b2.awbl=hc.awb)
-					 where nr.daterapport BETWEEN '$date1' AND '$date2' and b2.shot = 0  and b2.typeawbl='export' and cp.idcompagnie='$compagnie' and hc.description='Other charges due agent' ORDER BY b.awb_number ASC ";
-		$query = $this->db->query($sql);
+					 where nr.daterapport BETWEEN ? AND ? and b2.shot = 0  and b2.typeawbl='export' and cp.idcompagnie=? and hc.description='Other charges due agent' ORDER BY b.awb_number ASC ";
+		$query = $this->db->query($sql, array($date1, $date2, $compagnie));
 		return $query->result();
 		// $sql = "SELECT hc.awb, nr.num,sg.Date_of_arrival,sg.idcompagnie,sg.Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
 		//  FROM norapport as nr
@@ -667,28 +669,28 @@ class Parser extends CI_Model
 					 INNER JOIN manifeste as mn ON (mn.id_manifeste=b.id_manifeste)
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie =mn.idcompagnie)
 					 INNER JOIN buil as b2 ON (b2.awbl=hc.awb)
-					 where nr.daterapport BETWEEN '$date1' AND '$date2' and b2.shot = 0  and b2.typeawbl='export'  and hc.description='Other charges due agent' ORDER BY b.awb_number ASC ";
-		$query = $this->db->query($sql);
+					 where nr.daterapport BETWEEN ? AND ? and b2.shot = 0  and b2.typeawbl='export'  and hc.description='Other charges due agent' ORDER BY b.awb_number ASC ";
+		$query = $this->db->query($sql, array($date1, $date2));
 		return $query->result();
 	}
 	public function recherche_statistics_weight($date1, $date2, $type)
 	{
-		$sql = "SELECT sg.Date_of_arrival,cp.compagnie,sg.idcompagnie,sg.Voyage_number,sg.Registration_number_of_transport_code,sg.Place_of_departure_code,sum(b.weight) as totalp
+		$sql = "SELECT ANY_VALUE(sg.Date_of_arrival) AS `Date_of_arrival`, ANY_VALUE(cp.compagnie) AS `compagnie`, ANY_VALUE(sg.idcompagnie) AS `idcompagnie`, ANY_VALUE(sg.Voyage_number) AS `Voyage_number`, ANY_VALUE(sg.Registration_number_of_transport_code) AS `Registration_number_of_transport_code`, ANY_VALUE(sg.Place_of_departure_code) AS `Place_of_departure_code`, sum(b.weight) as totalp
 					 FROM segment as sg
 					 INNER JOIN buil as b ON (b.segmentid=sg.id)
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
-					 where sg.Date_of_arrival BETWEEN '$date1' AND '$date2' and b.shot = 0 and b.typeawbl='$type' GROUP BY sg.id";
-		$query = $this->db->query($sql);
+					 where sg.Date_of_arrival BETWEEN ? AND ? and b.shot = 0 and b.typeawbl=? GROUP BY sg.id";
+		$query = $this->db->query($sql, array($date1, $date2, $type));
 		return $query->result();
 	}
 	public function recherche_statistics_weight_export($date1, $date2, $type)
 	{
-		$sql = "SELECT mf.date,cp.compagnie,mf.idcompagnie,mf.flight,mf.country_loading,sum(b.total_weight_charge) as totalp
+		$sql = "SELECT ANY_VALUE(mf.date) AS `date`, ANY_VALUE(cp.compagnie) AS `compagnie`, ANY_VALUE(mf.idcompagnie) AS `idcompagnie`, ANY_VALUE(mf.flight) AS `flight`, ANY_VALUE(mf.country_loading) AS `country_loading`, sum(b.total_weight_charge) as totalp
 					 FROM manifeste as mf
 					 INNER JOIN awbl as b ON (b.id_manifeste=mf.idcompagnie)
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie = mf.idcompagnie)
-					 where mf.date BETWEEN '$date1' AND '$date2' and mf.vol_fermer = 1 and mf.type_manifeste='$type' GROUP BY mf.id_manifeste";
-		$query = $this->db->query($sql);
+					 where mf.date BETWEEN ? AND ? and mf.vol_fermer = 1 and mf.type_manifeste=? GROUP BY mf.id_manifeste";
+		$query = $this->db->query($sql, array($date1, $date2, $type));
 		return $query->result();
 	}
 	public function recherche_due_agent2($date1, $date2, $currency, $comp)
@@ -700,8 +702,8 @@ class Parser extends CI_Model
 					 INNER JOIN manifeste as mn ON (mn.id_manifeste=b.id_manifeste)
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie =mn.idcompagnie)
 					 INNER JOIN buil as b2 ON (b2.awbl=hc.awb)
-					 where nr.daterapport BETWEEN '$date1' AND '$date2' and b2.shot = 0  and b2.typeawbl='export' and cp.idcompagnie='$comp' and hc.description='Other charges due agent' and hc.monnaie='$currency' ORDER BY b.awb_number ASC";
-		$query = $this->db->query($sql);
+					 where nr.daterapport BETWEEN ? AND ? and b2.shot = 0  and b2.typeawbl='export' and cp.idcompagnie=? and hc.description='Other charges due agent' and hc.monnaie=? ORDER BY b.awb_number ASC";
+		$query = $this->db->query($sql, array($date1, $date2, $comp, $currency));
 		return $query->result();
 		// $sql = "SELECT hc.awb, nr.num,sg.Date_of_arrival,sg.idcompagnie,sg.Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
 		//  FROM norapport as nr
@@ -721,38 +723,38 @@ class Parser extends CI_Model
 			 	 INNER JOIN buil as b ON (b.awbl=hc.awb)
 			 	 INNER JOIN segment as sg ON (sg.id = b.segmentid)
 			 	 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
-			 	 where nr.daterapport BETWEEN '$date1' AND '$date2' and b.shot = 0 AND cp.compagnie='$comp' and hc.description='Airport Fees' and hc.monnaie='USD' ";
-		$query = $this->db->query($sql);
+			 	 where nr.daterapport BETWEEN ? AND ? and b.shot = 0 AND cp.compagnie=? and hc.description='Airport Fees' and hc.monnaie='USD' ";
+		$query = $this->db->query($sql, array($date1, $date2, $comp));
 		return $query->result();
 	}
 	public function recherche_weekly1($date1, $date2, $type)
 	{
-		$sql = "SELECT sg.Date_of_arrival,hc.date_hc,cp.compagnie,b.awbl,b.typeawbl,b.collect,b.freight,b.remarque2
+		$sql = "SELECT ANY_VALUE(sg.Date_of_arrival) AS `Date_of_arrival`, ANY_VALUE(hc.date_hc) AS `date_hc`, ANY_VALUE(cp.compagnie) AS `compagnie`, b.awbl, ANY_VALUE(b.typeawbl) AS `typeawbl`, ANY_VALUE(b.collect) AS `collect`, ANY_VALUE(b.freight) AS `freight`, ANY_VALUE(b.remarque2) AS `remarque2`
 					 FROM buil as b
 					 INNER JOIN segment as sg ON (sg.id = b.segmentid)
 					 INNER JOIN historique_caisse as hc ON (hc.awb = b.awbl)
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
-					 where hc.date_hc BETWEEN '$date1' AND '$date2' and b.shot = 0 and b.collect= 1 and b.typeawbl='$type' and hc.description='Freight' GROUP BY b.awbl ORDER BY b.awbl";
-		$query = $this->db->query($sql);
+					 where hc.date_hc BETWEEN ? AND ? and b.shot = 0 and b.collect= 1 and b.typeawbl=? and hc.description='Freight' GROUP BY b.awbl ORDER BY b.awbl";
+		$query = $this->db->query($sql, array($date1, $date2, $type));
 		return $query->result();
 	}
 	public function recherche_weekly2($date1, $date2, $type)
 	{
-		$sql = "SELECT b.awbl,b.datecreated,b.remarque,fr.description,SUM(fr.apayer) as total
+		$sql = "SELECT b.awbl, ANY_VALUE(b.datecreated) AS `datecreated`, ANY_VALUE(b.remarque) AS `remarque`, ANY_VALUE(fr.description) AS `description`, SUM(fr.apayer) as total
 					 FROM buil as b
 					 INNER JOIN tbl_facture as fr ON (fr.awbl = b.awbl)
-					 where b.datecreated BETWEEN '$date1' AND '$date2' and b.shot = 0 and b.prepaid= 1 and b.typeawbl='$type' and (fr.description LIKE'%due carrier%' or fr.description LIKE '%Weight charge%') GROUP BY b.awbl  ORDER BY b.awbl ";
-		$query = $this->db->query($sql);
+					 where b.datecreated BETWEEN ? AND ? and b.shot = 0 and b.prepaid= 1 and b.typeawbl=? and (fr.description LIKE'%due carrier%' or fr.description LIKE '%Weight charge%') GROUP BY b.awbl  ORDER BY b.awbl ";
+		$query = $this->db->query($sql, array($date1, $date2, $type));
 		return $query->result();
 	}
 	public function recherche_commission_weight1($date1, $date2, $type)
 	{
-		$sql = "SELECT sg.Date_of_arrival,sg.Place_of_departure_code,cp.compagnie,b.awbl,b.typeawbl,b.weight_charge,b.remarque2
+		$sql = "SELECT ANY_VALUE(sg.Date_of_arrival) AS `Date_of_arrival`, ANY_VALUE(sg.Place_of_departure_code) AS `Place_of_departure_code`, ANY_VALUE(cp.compagnie) AS `compagnie`, b.awbl, ANY_VALUE(b.typeawbl) AS `typeawbl`, ANY_VALUE(b.weight_charge) AS `weight_charge`, ANY_VALUE(b.remarque2) AS `remarque2`
 					 FROM buil as b
 					 INNER JOIN segment as sg ON (sg.id = b.segmentid)
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
-					 where sg.Date_of_arrival BETWEEN '$date1' AND '$date2' and b.shot = 0  and b.typeawbl='$type' GROUP BY b.awbl ORDER BY b.awbl,sg.Date_of_arrival ";
-		$query = $this->db->query($sql);
+					 where sg.Date_of_arrival BETWEEN ? AND ? and b.shot = 0  and b.typeawbl=? GROUP BY b.awbl ORDER BY b.awbl, `Date_of_arrival` ";
+		$query = $this->db->query($sql, array($date1, $date2, $type));
 		return $query->result();
 	}
 	public function recherche_commission_weight2($date1, $date2)
@@ -764,18 +766,17 @@ class Parser extends CI_Model
 		// 	 where b.datecreated BETWEEN '$date1' AND '$date2' and b.void = 0  and (oh.description='DUE AGENT' or oh.description='due agent') GROUP BY b.awb_number  ORDER BY b.awb_number";
 		// 	$query = $this->db->query($sql);
 		// 	return $query->result();
-		$sql = "SELECT manifeste.date,awbl.remarque2,awbl.route_to1,awbl.awb_number,awbl.id_manifeste,awbl.id_awbl,awbl.void,awbl.qty,warehouse.nature_and_quantity,
-				warehouse.gross_weight,awbl.name_shipper,awbl.name_consignee,awbl.total_freight,awbl.rate_Charge,SUM((warehouse_colis.no_pieces*warehouse_colis.dim1*warehouse_colis.dim2*warehouse_colis.dim3)/366) as totalvolum,awbl.currency
-			FROM awbl
+		$sql = "SELECT ANY_VALUE(manifeste.date) AS `date`, ANY_VALUE(awbl.remarque2) AS `remarque2`, ANY_VALUE(awbl.route_to1) AS `route_to1`, awbl.awb_number, ANY_VALUE(awbl.id_manifeste) AS `id_manifeste`, ANY_VALUE(awbl.id_awbl) AS `id_awbl`, ANY_VALUE(awbl.void) AS `void`, ANY_VALUE(awbl.qty) AS `qty`, ANY_VALUE(warehouse.nature_and_quantity) AS `nature_and_quantity`, ANY_VALUE(warehouse.gross_weight) AS `gross_weight`, ANY_VALUE(awbl.name_shipper) AS `name_shipper`, ANY_VALUE(awbl.name_consignee) AS `name_consignee`, ANY_VALUE(awbl.total_freight) AS `total_freight`, ANY_VALUE(awbl.rate_Charge) AS `rate_Charge`, SUM((warehouse_colis.no_pieces*warehouse_colis.dim1*warehouse_colis.dim2*warehouse_colis.dim3)/366) as totalvolum, ANY_VALUE(awbl.currency) AS `currency`
+					 FROM awbl
 			
 			INNER JOIN warehouse ON (warehouse.no_awbl = awbl.awb_number) 
 			INNER JOIN warehouse_colis ON (warehouse.no_warehouse = warehouse_colis.id_warehouse) 
 			INNER JOIN manifeste ON (manifeste.id_manifeste = awbl.	id_manifeste) 
-			where manifeste.date BETWEEN '$date1' AND '$date2' and awbl.void = 0  
+			where manifeste.date BETWEEN ? AND ? and awbl.void = 0  
 			GROUP BY awbl.awb_number
 			ORDER BY awbl.awb_number ASC";
 
-		$query = $this->db->query($sql);
+		$query = $this->db->query($sql, array($date1, $date2));
 		return $query->result();
 	}
 	public function recherche_commission_fees1($date1, $date2, $type)
@@ -783,9 +784,9 @@ class Parser extends CI_Model
 		$sql = "SELECT sg.Date_of_arrival,sg.Voyage_number,sg.Registration_number_of_transport_code,cp.compagnie,sg.id
 					 FROM segment as sg
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
-					 where sg.Date_of_arrival BETWEEN '$date1' AND '$date2' and sg.typesegment='$type' ORDER BY sg.Date_of_arrival";
+					 where sg.Date_of_arrival BETWEEN ? AND ? and sg.typesegment=? ORDER BY sg.Date_of_arrival";
 
-		$query = $this->db->query($sql);
+		$query = $this->db->query($sql, array($date1, $date2, $type));
 		return $query->result();
 	}
 	public function recherche_vol2($flight)
@@ -899,6 +900,85 @@ class Parser extends CI_Model
 
 		return $query->num_rows();
 	}
+	/**
+	 * Liste des clients paginee (AUDIT-018) : memes filtres et meme tri que get_allclient(),
+	 * avec une recherche optionnelle sur la reference ou le nom (valeur liee, AUDIT-001).
+	 */
+	private function _filtre_clients($recherche)
+	{
+		$this->db->where('codeclient !=', 'cash');
+		$this->db->where('codeclient !=', 'MISC');
+		if ($recherche !== '')
+		{
+			$this->db->group_start()
+				->like('reference', $recherche)
+				->or_like('societe', $recherche)
+				->group_end();
+		}
+	}
+
+	public function count_clients($recherche = '')
+	{
+		$this->_filtre_clients((string) $recherche);
+		return $this->db->count_all_results('tbl_client');
+	}
+
+	public function get_clients_page($limit, $offset, $recherche = '')
+	{
+		$this->_filtre_clients((string) $recherche);
+		$this->db->order_by('reference', 'ASC');
+		$this->db->limit((int) $limit, (int) $offset);
+		return $this->db->get('tbl_client')->result();
+	}
+
+	/**
+	 * Rapport des factures impayees pagine (AUDIT-011/018) : meme requete que get_factures(),
+	 * limitee a une page. Le total vient de compteurs_factures_impayees().
+	 */
+	/**
+	 * Numeros des factures impayees, dans l'ordre du rapport (requete legere, sans SELECT *).
+	 */
+	public function numeros_factures_impayees()
+	{
+		$sql = "SELECT tbl_facture.nofacture
+				FROM tbl_facture
+				INNER JOIN tbl_client ON tbl_client.codeclient = tbl_facture.codeclient
+				INNER JOIN buil ON buil.awbl = tbl_facture.awbl
+				INNER JOIN segment ON segment.id = buil.segmentid
+				INNER JOIN compaganie ON compaganie.idcompagnie = segment.idcompagnie
+				WHERE awbl_type = ? AND shot = ?
+				GROUP BY tbl_facture.nofacture
+				HAVING (SUM(apayer) - SUM(payer) - SUM(rabais)) > 0
+				ORDER BY MIN(tbl_facture.date) ASC, tbl_facture.nofacture ASC";
+		return array_column($this->db->query($sql, array('import', '0'))->result_array(), 'nofacture');
+	}
+
+	public function get_factures_page(array $numeros)
+	{
+		if (empty($numeros))
+		{
+			return array();
+		}
+		$this->db->where_in('tbl_facture.nofacture', $numeros);
+		// ONLY_FULL_GROUP_BY (MySQL 8/9) : "*" remplace par les colonnes explicites en ANY_VALUE(), resultat identique
+		$this->db->select(sigco_colonnes_any_value(array('tbl_facture', 'tbl_client', 'buil', 'segment', 'compaganie'), array('nofacture', 'date'))
+			.', sum(apayer), sum(payer), sum(rabais), (sum(apayer) - sum(payer)-sum(rabais)) as balance, tbl_facture.nofacture, ANY_VALUE(tbl_facture.date) AS `date`', FALSE);
+		$this->db->from('tbl_facture');
+		$this->db->join('tbl_client', 'tbl_client.codeclient = tbl_facture.codeclient', 'inner');
+		$this->db->join('buil', 'buil.awbl = tbl_facture.awbl', 'inner');
+		$this->db->join('segment', 'segment.id=buil.segmentid', 'inner');
+		$this->db->where('awbl_type', 'import');
+		$this->db->where('shot', '0');
+		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
+		$this->db->group_by('nofacture');
+		$this->db->having('(sum(apayer) - sum(payer) -sum(rabais))>', '0');
+		$lignes = $this->db->get()->result();
+		// remet les factures dans l'ordre de la liste des numeros
+		$rang = array_flip($numeros);
+		usort($lignes, function ($x, $y) use ($rang) { return $rang[$x->nofacture] - $rang[$y->nofacture]; });
+		return $lignes;
+	}
+
 	public function get_allclient()
 	{
 		$this->db->order_by("reference", "ASC");
@@ -1145,13 +1225,15 @@ class Parser extends CI_Model
 	public function get_paiement_all($id)
 	{
 
-		$this->db->select('*, sum(apayer), sum(payer), sum(rabais), (sum(apayer) - sum(payer)-sum(rabais)) as balance,tbl_facture.nofacture, tbl_facture.date');
+		// ONLY_FULL_GROUP_BY (MySQL 8/9) : "*" remplace par les colonnes explicites en ANY_VALUE(), resultat identique
+		$this->db->select(sigco_colonnes_any_value(array('tbl_facture', 'tbl_client', 'buil'), array('nofacture', 'date'))
+			.', sum(apayer), sum(payer), sum(rabais), (sum(apayer) - sum(payer)-sum(rabais)) as balance, tbl_facture.nofacture, ANY_VALUE(tbl_facture.date) AS `date`', FALSE);
 		$this->db->join('tbl_client', 'tbl_client.codeclient = tbl_facture.codeclient', 'inner');
 		$this->db->join('buil', 'buil.awbl = tbl_facture.awbl', 'inner');
 		// $this->db->join('segment', 'segment.id=buil.segmentid','inner');
 		// $this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie','inner');
 		// $this->db->where('awbl_type', 'import');
-		$where = "tbl_facture.codeclient=" . "'" . $id . "'";
+		$where = "tbl_facture.codeclient=" . $this->db->escape($id);
 		$this->db->group_by('nofacture');
 		$this->db->having('(sum(apayer) - sum(payer) -sum(rabais))>', '0');
 		$this->db->order_by('date', 'ASC');
@@ -1329,7 +1411,8 @@ class Parser extends CI_Model
 
 	public function get_facture($id)
 	{
-		$this->db->select('*,sum(apayer) as mt');
+		// ONLY_FULL_GROUP_BY (MySQL 8/9) : colonnes explicites en ANY_VALUE(), resultat identique
+		$this->db->select(sigco_colonnes_any_value(array('tbl_facture', 'tbl_client', 'buil', 'segment', 'compaganie')).', sum(apayer) as mt', FALSE);
 		$this->db->from('tbl_facture');
 		$this->db->join('tbl_client', 'tbl_client.codeclient = tbl_facture.codeclient', 'inner');
 		$this->db->join('buil', 'buil.awbl = tbl_facture.awbl', 'inner');
@@ -1467,10 +1550,56 @@ class Parser extends CI_Model
 		return true;
 	}
 
+	/**
+	 * Tableau de bord (AUDIT-011) : memes jointures et filtres que get_factures(),
+	 * mais MySQL ne renvoie que les deux compteurs affiches au lieu de toutes les factures.
+	 *  - impayee : factures (nofacture) dont le solde apayer - payer - rabais est > 0
+	 *  - duedate : parmi elles, celles datees de plus de 30 jours (ecart absolu, comme diff_date())
+	 */
+	public function compteurs_factures_impayees()
+	{
+		$sql = "SELECT COUNT(*) AS impayee,
+					COALESCE(SUM(ABS(DATEDIFF(CURDATE(), t.date_facture)) > 30), 0) AS duedate
+				FROM (
+					SELECT tbl_facture.nofacture, MIN(tbl_facture.date) AS date_facture
+					FROM tbl_facture
+					INNER JOIN tbl_client ON tbl_client.codeclient = tbl_facture.codeclient
+					INNER JOIN buil ON buil.awbl = tbl_facture.awbl
+					INNER JOIN segment ON segment.id = buil.segmentid
+					INNER JOIN compaganie ON compaganie.idcompagnie = segment.idcompagnie
+					WHERE awbl_type = ? AND shot = ?
+					GROUP BY tbl_facture.nofacture
+					HAVING (SUM(apayer) - SUM(payer) - SUM(rabais)) > 0
+				) AS t";
+		return $this->db->query($sql, array('import', '0'))->row_array();
+	}
+
+	/**
+	 * Tableau de bord (AUDIT-011) : les 8 compteurs AWBL (awbl_none, awbl_pp, awbl_cc, awbl_nc,
+	 * awbl_nonlivre, awbl_retard, awbl_type('import'), awbl_type2('export')) en une seule requete,
+	 * avec exactement les memes conditions que les methodes d'origine.
+	 */
+	public function compteurs_awbl()
+	{
+		$sql = "SELECT
+				COALESCE(SUM(typeawbl = 'import' AND shot = '0' AND nolivraison = '--' AND prepaid = '0' AND collect = '0' AND nocharge = '0'), 0) AS awblnone,
+				COALESCE(SUM(typeawbl = 'import' AND shot = '0' AND nolivraison = '--' AND prepaid = '1' AND collect = '0' AND nocharge = '0'), 0) AS awblpp,
+				COALESCE(SUM(typeawbl = 'import' AND shot = '0' AND nolivraison = '--' AND prepaid = '0' AND collect = '1' AND nocharge = '0'), 0) AS awblcc,
+				COALESCE(SUM(typeawbl = 'import' AND shot = '0' AND nolivraison = '--' AND prepaid = '0' AND collect = '0' AND nocharge = '1'), 0) AS awblnc,
+				COALESCE(SUM(typeawbl = 'import' AND shot = '0' AND nolivraison = '--'), 0) AS awblnonlivre,
+				COALESCE(SUM(typeawbl = 'import' AND shot = '0' AND nolivraison = '--' AND DATEDIFF(NOW(), datenotification) > 0), 0) AS awblretard,
+				COALESCE(SUM(typeawbl = 'import' AND shot = '0' AND nolivraison = '--'), 0) AS awblimport,
+				COALESCE(SUM(typeawbl = 'export' AND nolivraison = 'OK-export'), 0) AS awblexport
+			FROM buil
+			WHERE typeawbl IN ('import', 'export')";
+		return $this->db->query($sql)->row_array();
+	}
 
 	public function get_factures()
 	{
-		$this->db->select('*, sum(apayer), sum(payer), sum(rabais), (sum(apayer) - sum(payer)-sum(rabais)) as balance,tbl_facture.nofacture, tbl_facture.date');
+		// ONLY_FULL_GROUP_BY (MySQL 8/9) : "*" remplace par les colonnes explicites en ANY_VALUE(), resultat identique
+		$this->db->select(sigco_colonnes_any_value(array('tbl_facture', 'tbl_client', 'buil', 'segment', 'compaganie'), array('nofacture', 'date'))
+			.', sum(apayer), sum(payer), sum(rabais), (sum(apayer) - sum(payer)-sum(rabais)) as balance, tbl_facture.nofacture, ANY_VALUE(tbl_facture.date) AS `date`', FALSE);
 		$this->db->from('tbl_facture');
 		$this->db->join('tbl_client', 'tbl_client.codeclient = tbl_facture.codeclient', 'inner');
 		$this->db->join('buil', 'buil.awbl = tbl_facture.awbl', 'inner');
@@ -1505,7 +1634,7 @@ class Parser extends CI_Model
 		$this->db->select('*');
 		$this->db->from('buil');
 		$this->db->where('buil.datelivre', $no);
-		$this->db->where('datelivre !=', '0000-00-00');
+		$this->db->where('YEAR(datelivre) <>', 0, FALSE); // = "datelivre != '0000-00-00'", valable aussi sous NO_ZERO_DATE (MySQL 8/9)
 		$this->db->where('datelivre !=', NULL);
 		$this->db->where('buil.typeawbl', 'import');
 		// $this->db->join('buil', 'buil.awbl = historique_caisse.awb','inner');
@@ -1521,7 +1650,7 @@ class Parser extends CI_Model
 		$this->db->select('*');
 		$this->db->from('degroupage');
 		$this->db->where('degroupage.livrer_le ', $no);
-		$this->db->where('degroupage.livrer_le !=', '0000-00-00');
+		$this->db->where('YEAR(degroupage.livrer_le) <>', 0, FALSE); // = "degroupage.livrer_le != '0000-00-00'", valable aussi sous NO_ZERO_DATE (MySQL 8/9)
 		$this->db->where('degroupage.livrer_le !=', NULL);
 		$this->db->where('degroupage.awbl_type', 'import');
 		$this->db->join('buil', 'buil.awbl=degroupage.idbuil', 'inner');
@@ -1536,10 +1665,10 @@ class Parser extends CI_Model
 		$this->db->select('');
 		$this->db->join('segment', 'segment.id=buil.segmentid', 'inner');
 		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
-		$this->db->where('datelivre !=', '0000-00-00');
+		$this->db->where('YEAR(datelivre) <>', 0, FALSE); // = "datelivre != '0000-00-00'", valable aussi sous NO_ZERO_DATE (MySQL 8/9)
 		$this->db->where('datelivre !=', NULL);
 		$this->db->where('buil.typeawbl', 'import');
-		$where = "DATE(buil.datelivre) BETWEEN " . "'" . $date1 . "'" . " AND " . "'" . $date2 . "'";
+		$where = "DATE(buil.datelivre) BETWEEN " . $this->db->escape($date1) . " AND " . $this->db->escape($date2);
 		$query = $this->db->where($where)->get('buil');
 		return $query->result();
 	}
@@ -1549,10 +1678,10 @@ class Parser extends CI_Model
 		$this->db->join('buil', 'buil.awbl=degroupage.idbuil', 'inner');
 		$this->db->join('segment', 'segment.id=buil.segmentid', 'inner');
 		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
-		$this->db->where('degroupage.livrer_le !=', '0000-00-00');
+		$this->db->where('YEAR(degroupage.livrer_le) <>', 0, FALSE); // = "degroupage.livrer_le != '0000-00-00'", valable aussi sous NO_ZERO_DATE (MySQL 8/9)
 		$this->db->where('degroupage.livrer_le !=', NULL);
 		$this->db->where('degroupage.awbl_type', 'import');
-		$where = "DATE(degroupage.livrer_le) BETWEEN " . "'" . $date1 . "'" . " AND " . "'" . $date2 . "'";
+		$where = "DATE(degroupage.livrer_le) BETWEEN " . $this->db->escape($date1) . " AND " . $this->db->escape($date2);
 		$this->db->order_by('degroupage.nobuil', 'ASC');
 		$query = $this->db->where($where)->get('degroupage');
 		return $query->result();
@@ -1565,7 +1694,7 @@ class Parser extends CI_Model
 		// $this->db->where('datelivre !=', '0000-00-00');
 		$this->db->where('datelivre =', NULL);
 		$this->db->where('buil.typeawbl', 'import');
-		$where = "DATE(segment.Date_of_arrival) BETWEEN " . "'" . $date1 . "'" . " AND " . "'" . $date2 . "'";
+		$where = "DATE(segment.Date_of_arrival) BETWEEN " . $this->db->escape($date1) . " AND " . $this->db->escape($date2);
 		$query = $this->db->where($where)->get('buil');
 		return $query->result();
 	}
@@ -1681,8 +1810,8 @@ class Parser extends CI_Model
 		// $this->db->or_like('segment.norapport', $flight);
 		// $query = $this->db->get();
 		// return $query->result();
-		$sql = "SELECT awbl,indice,notify_code,notify_name,notify_adress,qty,qtytotal,package,weight,consignee,freight,weight_charge,currency,datecreated,datenotification,status,segmentid,prepaid,collect,nocharge,remarque,datelivre,livrepar,recupar,nif,nolivraison,typeawbl FROM buil  WHERE (awbl LIKE'%$flight%')";
-		$query = $this->db->query($sql);
+		$sql = "SELECT awbl,indice,notify_code,notify_name,notify_adress,qty,qtytotal,package,weight,consignee,freight,weight_charge,currency,datecreated,datenotification,status,segmentid,prepaid,collect,nocharge,remarque,datelivre,livrepar,recupar,nif,nolivraison,typeawbl FROM buil  WHERE (awbl LIKE?)";
+		$query = $this->db->query($sql, array('%'.$flight.'%'));
 		return $query->result();
 	}
 
@@ -1692,11 +1821,11 @@ class Parser extends CI_Model
 		FROM buil  
 				
 					 INNER JOIN segment as sg ON (sg.id = buil .segmentid)
-                    WHERE (awbl LIKE'%$noawb%' AND typeawbl ='import')";		
+                    WHERE (awbl LIKE? AND typeawbl ='import')";		
 		
 		
 		
-		$query = $this->db->query($sql);
+		$query = $this->db->query($sql, array('%'.$noawb.'%'));
 		return $query->result();
 	
 	}
@@ -1709,24 +1838,25 @@ class Parser extends CI_Model
 	{
 		if ($st == "NIL") $st = "";
 		else {
-			$st = str_replace("'", "\'", $st);
+			// Valeur liee a la requete : plus d'echappement manuel (AUDIT-001)
 		}
 		if ($st == 'f' || $st == 'rech') $st = 0;
 		if ($start == 'f' || $start == 'rech') $start = 0;
-		$sql = "SELECT awbl,indice,notify_code,notify_name,notify_adress,qty,qtytotal,package,weight,consignee,freight,weight_charge,currency,datecreated,datenotification,status,segmentid,prepaid,collect,nocharge,remarque,datelivre,livrepar,recupar,nif,nolivraison,shot,void,typeawbl FROM buil  WHERE (awbl LIKE'%$st%') ORDER BY  awbl ASC";
-		$query = $this->db->query($sql);
+		$sql = "SELECT awbl,indice,notify_code,notify_name,notify_adress,qty,qtytotal,package,weight,consignee,freight,weight_charge,currency,datecreated,datenotification,status,segmentid,prepaid,collect,nocharge,remarque,datelivre,livrepar,recupar,nif,nolivraison,shot,void,typeawbl FROM buil  WHERE (awbl LIKE?) ORDER BY  awbl ASC";
+		$query = $this->db->query($sql, array('%'.$st.'%'));
 		return $query->result();
 	}
 	public function getData2($limit, $start, $st = NULL)
 	{
 		if ($st == "NIL") $st = "";
 		else {
-			$st = str_replace("'", "\'", $st);
+			// Valeur liee a la requete : plus d'echappement manuel (AUDIT-001)
 		}
 		if ($st == 'f' || $st == 'rech') $st = 0;
 		if ($start == 'f' || $start == 'rech') $start = 0;
-		$sql = "SELECT awbl,indice,notify_code,notify_name,notify_adress,qty,qtytotal,package,weight,consignee,freight,weight_charge,currency,datecreated,datenotification,status,segmentid,prepaid,collect,nocharge,remarque,datelivre,livrepar,recupar,nif,nolivraison,typeawbl FROM buil  WHERE (awbl LIKE'%$st%' OR consignee LIKE'%$st%' OR notify_name LIKE'%$st%') order by id desc limit " . $start . ", " . $limit;
-		$query = $this->db->query($sql);
+		$sql = "SELECT awbl,indice,notify_code,notify_name,notify_adress,qty,qtytotal,package,weight,consignee,freight,weight_charge,currency,datecreated,datenotification,status,segmentid,prepaid,collect,nocharge,remarque,datelivre,livrepar,recupar,nif,nolivraison,typeawbl FROM buil  WHERE (awbl LIKE ? OR consignee LIKE ? OR notify_name LIKE ?) order by id desc limit " . (int) $start . ", " . (int) $limit;
+		$like = '%'.$st.'%';
+		$query = $this->db->query($sql, array($like, $like, $like));
 		return $query->result();
 	}
 	/*
@@ -1735,10 +1865,10 @@ class Parser extends CI_Model
 	{
 		if ($st == "NIL") $st = "";
 		else {
-			$st = str_replace("'", "\'", $st);
+			// Valeur liee a la requete : plus d'echappement manuel (AUDIT-001)
 		}
-		$sql = "SELECT id FROM buil   WHERE (awbl LIKE'%$st%' OR notify_code LIKE'%$st%' OR notify_name LIKE'%$st%') ";
-		$query = $this->db->query($sql);
+		$sql = "SELECT id FROM buil   WHERE (awbl LIKE? OR notify_code LIKE? OR notify_name LIKE?) ";
+		$query = $this->db->query($sql, array('%'.$st.'%', '%'.$st.'%', '%'.$st.'%'));
 		return $query->num_rows();
 	}
 
@@ -1755,12 +1885,13 @@ class Parser extends CI_Model
 	{
 		if ($st == "NIL") $st = "";
 		else {
-			$st = str_replace("'", "\'", $st);
+			// Valeur liee a la requete : plus d'echappement manuel (AUDIT-001)
 		}
 		if ($st == 'f' || $st == 'rech') $st = 0;
 		if ($start == 'f' || $start == 'rech') $start = 0;
-		$sql = "SELECT awbl,indice,notify_code,notify_name,notify_adress,qty,qtytotal,package,weight,consignee,freight,weight_charge,currency,datecreated,datenotification,status,segmentid,prepaid,collect,nocharge,remarque,datelivre,livrepar,recupar,nif,nolivraison,typeawbl FROM buil  WHERE (awbl LIKE'%$st%' OR consignee LIKE'%$st%' OR notify_name LIKE'%$st%') order by id desc limit " . $start . ", " . $limit;
-		$query = $this->db->query($sql);
+		$sql = "SELECT awbl,indice,notify_code,notify_name,notify_adress,qty,qtytotal,package,weight,consignee,freight,weight_charge,currency,datecreated,datenotification,status,segmentid,prepaid,collect,nocharge,remarque,datelivre,livrepar,recupar,nif,nolivraison,typeawbl FROM buil  WHERE (awbl LIKE ? OR consignee LIKE ? OR notify_name LIKE ?) order by id desc limit " . (int) $start . ", " . (int) $limit;
+		$like = '%'.$st.'%';
+		$query = $this->db->query($sql, array($like, $like, $like));
 		return $query->result();
 	}
 	/*
@@ -1769,10 +1900,10 @@ class Parser extends CI_Model
 	{
 		if ($st == "NIL") $st = "";
 		else {
-			$st = str_replace("'", "\'", $st);
+			// Valeur liee a la requete : plus d'echappement manuel (AUDIT-001)
 		}
-		$sql = "SELECT id FROM buil   WHERE (awbl LIKE'%$st%' OR notify_code LIKE'%$st%' OR notify_name LIKE'%$st%') ";
-		$query = $this->db->query($sql);
+		$sql = "SELECT id FROM buil   WHERE (awbl LIKE? OR notify_code LIKE? OR notify_name LIKE?) ";
+		$query = $this->db->query($sql, array('%'.$st.'%', '%'.$st.'%', '%'.$st.'%'));
 		return $query->num_rows();
 	}
 
@@ -1780,16 +1911,16 @@ class Parser extends CI_Model
 	{
 		if ($st == "NIL") $st = "";
 		else {
-			$st = str_replace("'", "\'", $st);
+			// Valeur liee a la requete : plus d'echappement manuel (AUDIT-001)
 		}
-		$sql = "SELECT id FROM buil   WHERE (awbl LIKE'%$st%') ";
-		$query = $this->db->query($sql);
+		$sql = "SELECT id FROM buil   WHERE (awbl LIKE?) ";
+		$query = $this->db->query($sql, array('%'.$st.'%'));
 		return $query->num_rows();
 	}
 
 	public function set_les_bills($data)
 	{
-		$this->db->where('datenotification =', '0000-00-00');
+		$this->db->where('YEAR(datenotification) =', 0, FALSE); // = "datenotification = '0000-00-00'", valable aussi sous NO_ZERO_DATE (MySQL 8/9)
 		$query = $this->db->update_batch('buil', $data, 'id');
 		return $query;
 	}
@@ -1823,15 +1954,15 @@ class Parser extends CI_Model
 	}
 	public function delete1_fac($id)
 	{
-		$sql = "delete s FROM tbl_facture s INNER JOIN buil on (s.awbl = buil.awbl) INNER JOIN segment ON buil.segmentid = segment.id INNER JOIN compaganie ON compaganie.idcompagnie = segment.idcompagnie WHERE  (buil.segmentid = '$id' AND buil.typeawbl = 'import')";
-		$query = $this->db->query($sql);
+		$sql = "delete s FROM tbl_facture s INNER JOIN buil on (s.awbl = buil.awbl) INNER JOIN segment ON buil.segmentid = segment.id INNER JOIN compaganie ON compaganie.idcompagnie = segment.idcompagnie WHERE  (buil.segmentid = ? AND buil.typeawbl = 'import')";
+		$query = $this->db->query($sql, array($id));
 		return $query;
 	}
 
 	public function delete2_buil($id)
 	{
-		$sql = "delete s FROM buil s INNER JOIN segment ON s.segmentid = segment.id INNER JOIN compaganie ON compaganie.idcompagnie = segment.idcompagnie  WHERE (s.segmentid = '$id' AND s.typeawbl = 'import')";
-		$query = $this->db->query($sql);
+		$sql = "delete s FROM buil s INNER JOIN segment ON s.segmentid = segment.id INNER JOIN compaganie ON compaganie.idcompagnie = segment.idcompagnie  WHERE (s.segmentid = ? AND s.typeawbl = 'import')";
+		$query = $this->db->query($sql, array($id));
 		return $query;
 	}
 	//fin//

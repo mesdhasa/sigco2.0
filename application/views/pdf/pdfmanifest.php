@@ -1,4 +1,9 @@
 <?php
+// Compatibilite PHP 8 (Bloc 02) : initialisations implicites en PHP 7, obligatoires en PHP 8
+isset($total) OR $total = 0;
+isset($totalkgs) OR $totalkgs = 0;
+isset($totallbs) OR $totallbs = 0;
+?><?php
 foreach($lemanifeste as $rs){}
 $corps_tab = "";
 	$r=0;$weight=0;foreach($lesawb as $row){$r++;
@@ -17,7 +22,7 @@ $corps_tab = "";
 									<td class='color awbfont tdtab4'>".$row->name_consignee."</td>
 									<td class='color awbfont tdtab'>".$row->total_freight."</td>
 								</tr>";
-								$total+=$row->qty;
+								$total+= (float) $row->qty;
 								$totalkgs+=floatval($row->gross_weight);
 								$totallbs+=$lbs;
 }
@@ -154,21 +159,21 @@ font-size: 28px;
 <span class=''>ICAO ANNEX 9-APP.4</span><br/><br/><br/>
 </p>
 <table>
-<td class='td1 span_left2 color size1'>
+<tr><td class='td1 span_left2 color size1'>
 <span class='mes_p1'>".$rs->compagnie."</span><br/>
 <span class='span_left'></span>
 
-</td>
+</td></tr>
 </table>
 <table>
-<td >
+<tr><td >
 <span class='mes_p1'>SOWNER OR OPERATOR</span><br/>
 <span >administrador</span>
 </td>
 <td class='td1 span_left'>
 <span class='mes_p1'></span><br/>
 <span class='span_left'>_________________________________________________________________________________________________</span>
-</td>
+</td></tr>
 </table><br/><br/><br/>
 
 
@@ -182,7 +187,7 @@ font-size: 28px;
 
 <table>
 
-<td class='td1 span_left3'>
+<tr><td class='td1 span_left3'>
 <span class='mes_p2 color size2'>".$rs->air_craft."</span><br/>
 <span ></span>
 </td>
@@ -195,10 +200,10 @@ font-size: 28px;
 <td class='td1 span_left5 size2'>
 <span class='mes_p1 color'>".$rs->date."</span><br/>
 <span ></span>
-</td>
+</td></tr>
 </table>
 <table>
-<td>
+<tr><td>
 <span class='mes_p1'>AIRCRAFT</span><br/>
 <span >Aeronave</span>
 </td>
@@ -221,15 +226,15 @@ font-size: 28px;
 <td class='td1'>
 <span class='mes_p1'></span><br/>
 <span >____________________</span>
-</td>
+</td></tr>
 </table><br/><br/>
 
 <table>
 
-<td class='td1 span_left6'>
+<tr><td class='td1 span_left6'>
 <span class='mes_p2'>(REGISTRATION MARKS AND NATIONALITY)</span><br/>
 <span > (Matricula, Marca y Nacionalidad)</span>
-</td>
+</td></tr>
 
 </table><br/><br/>
 
@@ -242,7 +247,7 @@ font-size: 28px;
 
 <table>
 
-<td class='td1 span_left7'>
+<tr><td class='td1 span_left7'>
 <span class='mes_p2 color size2'>PORT-AU-PRINCE</span><br/>
 <span ></span>
 </td>
@@ -250,11 +255,11 @@ font-size: 28px;
 <td class='td1 span_left8 size2'>
 <span class='mes_p1 color'>".$rs->country_unloading."</span><br/>
 <span ></span>
-</td>
+</td></tr>
 
 </table>
 <table>
-<td>
+<tr><td>
 <span class='mes_p1'>POINT OF LOADIN</span><br/>
 <span >Punto de Carga</span>
 </td>
@@ -269,24 +274,24 @@ font-size: 28px;
 <td class='td1'>
 <span class='mes_p1'></span><br/>
 <span >________________________________________</span>
-</td>
+</td></tr>
 
 
 </table><br/><br/>
 
 <table>
-<td class='td1 span_left7'>
+<tr><td class='td1 span_left7'>
 <span class='mes_p2'>(PLACE AND COUNTRY)</span><br/>
 <span > ( Lugar y Pa&iacute;s )</span>
 </td>
 <td class='td1 span_left8'>
 <span class='mes_p2'>(PLACE AND COUNTRY)</span><br/>
 <span > ( Lugar y Pa&iacute;s )</span>
-</td>
+</td></tr>
 </table><br/><br/>
 
 <table>
-<td class='td2'></td>
+<tr><td class='td2'></td></tr>
 </table><br/>
 
 <table class='table'>

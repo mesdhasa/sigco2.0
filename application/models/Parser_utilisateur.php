@@ -26,19 +26,19 @@ class Parser_utilisateur extends CI_Model
 	{
 	$this->db->where('identreprise', $utilisateur_code);
 	$this->db->update('entreprise', $data);
-	return $query;
+	return TRUE;
 	}
 	public function set_a_testuser($id2,$data)
 	{
 	$this->db->where('identreprise', $id2);
 	$this->db->update('entreprise', $data);
-	return $query;
+	return TRUE;
 	}
 	public function set_a_password($utilisateur_code,$data)
 	{
 	$this->db->where('identreprise', $utilisateur_code);
 	$this->db->update('entreprise', $data);
-	return $query;
+	return TRUE;
 	}
 	public function testuser($id,$passe)
 	{

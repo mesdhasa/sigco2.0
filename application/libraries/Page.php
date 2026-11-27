@@ -16,7 +16,7 @@ class Page
         $this->api->load->library('encryption');
 	}
 	//public function loadpage($table,$controller,$model,$size=5,$operation=null)
-	public function loadpage($method,$model,$controller,$size=2,$total_rows)
+	public function loadpage($method,$model,$controller,$size,$total_rows)
     {
         //pagination settings
         $config['base_url'] = site_url($controller);
@@ -24,7 +24,7 @@ class Page
         $config['per_page'] =$size;
         $config["uri_segment"] = 3;
         $choice = $config["total_rows"]/$config["per_page"];
-        $config["num_links"] = floor($choice);
+        $config["num_links"] = 5; // etait floor($choice) : un lien par page (des centaines)
         // integrate bootstrap pagination
         $config['full_tag_open'] = '<ul class="pagination pagination-md">';
         $config['full_tag_close'] = '</ul>';
@@ -63,7 +63,7 @@ class Page
         $config['per_page'] =$size;
         $config["uri_segment"] = 3;
         $choice = $config["total_rows"]/$config["per_page"];
-        $config["num_links"] = floor($choice);
+        $config["num_links"] = 5; // etait floor($choice) : un lien par page (des centaines)
         // integrate bootstrap pagination
         $config['full_tag_open'] = '<ul class="pagination">';
         $config['full_tag_close'] = '</ul>';
@@ -94,7 +94,7 @@ class Page
 
 //**//
 //*Function that allow you look for some data in a table by some field*//
-function searches($param,$controller,$model,$size=5,$function,$get_number)
+function searches($param,$controller,$model,$size,$function,$get_number)
     {
 
         // get search string
@@ -109,7 +109,7 @@ function searches($param,$controller,$model,$size=5,$function,$get_number)
         $config['per_page'] = $size;
         $config["uri_segment"] = 4;
         $choice = $config["total_rows"]/$config["per_page"];
-        $config["num_links"] = floor($choice);
+        $config["num_links"] = 5; // etait floor($choice) : un lien par page (des centaines)
 
         // integrate bootstrap pagination
         $config['full_tag_open'] = '<ul class="pagination">';
@@ -140,7 +140,7 @@ function searches($param,$controller,$model,$size=5,$function,$get_number)
         return $data;
     }
 //*Function that allow you look for some data in a table by some field*//
-function search($param,$table,$controller,$model,$size=5,$operation=null,$total_rows)
+function search($param,$table,$controller,$model,$size,$operation,$total_rows)
     {
         (is_null($operation))? $function="get_".$table : $function=$operation;
         // get search string
@@ -155,7 +155,7 @@ function search($param,$table,$controller,$model,$size=5,$operation=null,$total_
         $config['per_page'] = $size;
         $config["uri_segment"] = 4;
         $choice = $config["total_rows"]/$config["per_page"];
-        $config["num_links"] = floor($choice);
+        $config["num_links"] = 5; // etait floor($choice) : un lien par page (des centaines)
 
         // integrate bootstrap pagination
         $config['full_tag_open'] = '<ul class="pagination">';
@@ -197,7 +197,7 @@ function search($param,$table,$controller,$model,$size=5,$operation=null,$total_
         $config['per_page'] = $size;
         $config["uri_segment"] = 3;
         $choice = $config["total_rows"]/$config["per_page"];
-        $config["num_links"] = floor($choice);
+        $config["num_links"] = 5; // etait floor($choice) : un lien par page (des centaines)
         // integrate bootstrap pagination
         $config['full_tag_open'] = '<ul class="pagination">';
         $config['full_tag_close'] = '</ul>';

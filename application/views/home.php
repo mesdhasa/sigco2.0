@@ -1,18 +1,8 @@
 <?php require_once('tete.php');
-$impayee = 0;
-$duedate = 0;
-foreach($lesfactures as $facs){
-	if($facs->balance > 0){
-		$impayee ++;
-	}
-	if(diff_date($facs->date,date('Y-m-d')) > 30){
-		$duedate ++;
-	}
-}
-$t = 0;
-foreach($stock as $stk){
-	$t = $stk->total;
-}
+// Compteurs calcules par MySQL dans Home::index (AUDIT-011)
+$impayee = isset($impayee) ? (int) $impayee : 0;
+$duedate = isset($duedate) ? (int) $duedate : 0;
+$t = isset($stock_total) ? $stock_total : 0;
 
 ?>
 
@@ -35,7 +25,7 @@ if($this->session->flashdata('sms')){
 					echo count($lessegments).'<br /><hr />';
 					$som = 0;
 					foreach($lessegments as $sqty){
-						$som +=$sqty->qty;
+						$som += (float) $sqty->qty;
 					}
 					echo $som.' colis';
 					?></h1></div>

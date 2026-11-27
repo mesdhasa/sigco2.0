@@ -25,6 +25,12 @@ require_once("tete.php");
                           <div class="col-lg-12">
 											<div class="table-responsive">
 
+						<form method="get" action="<?php echo current_url();?>" class="form-inline" style="margin-bottom:10px">
+							<input type="text" name="q" class="form-control" placeholder="R&eacute;f&eacute;rence ou nom" value="<?php echo e($recherche);?>" />
+							<button type="submit" class="btn btn-sm btn-primary"><i class="ace-icon fa fa-search"></i> Rechercher</button>
+							<span class="text-muted">&nbsp;<?php echo (int) $pagination['total'];?> client(s) &ndash; page <?php echo (int) $pagination['page'];?> / <?php echo (int) $pagination['pages'];?></span>
+						</form>
+						<?php echo $pagination['liens'];?>
 						<table class="table table-striped table-bordered table-hover">
 							<thead>
 							<tr>
@@ -41,18 +47,18 @@ require_once("tete.php");
 							</thead>
 
 							<tbody>
-							<?php $c=0;foreach($lesclients as $row){$c++;?>
+							<?php $c=$pagination['offset'];foreach($lesclients as $row){$c++;?>
 							 <tr>
 								<td><?php echo $c;?></td>
-								<td><?php echo $row->reference;?></td>
-								<td><?php echo $row->societe;?></td>
-								<td><?php echo $row->adresse;?></td>
-								<td><?php echo $row->ville;?></td>
-								<td><?php echo $row->email;?></td>
-								<td><?php echo $row->phone;?></td>
+								<td><?php echo e($row->reference);?></td>
+								<td><?php echo e($row->societe);?></td>
+								<td><?php echo e($row->adresse);?></td>
+								<td><?php echo e($row->ville);?></td>
+								<td><?php echo e($row->email);?></td>
+								<td><?php echo e($row->phone);?></td>
 								<td class="center" style="width:5%">
 									<div class="action-buttons">
-										<a title="Afficher" class="btn btn-xs btn-info" href="<?php echo base_url()?>client/modifier/c/liste_client/<?php echo $row->codeclient;?>">
+										<a title="Afficher" class="btn btn-xs btn-info" href="<?php echo base_url()?>client/modifier/c/liste_client/<?php echo rawurlencode($row->codeclient);?>">
 											<i class="ace-icon fa fa-plus bigger-120"></i>
 										</a>
 									</div>
@@ -68,6 +74,7 @@ require_once("tete.php");
 							<?php }?>
 							</tbody>
 						</table>
+						<?php echo $pagination['liens'];?>
 
 
 												</div>

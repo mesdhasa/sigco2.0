@@ -1,4 +1,8 @@
 <?php
+// Compatibilite PHP 8 (Bloc 02) : initialisations implicites en PHP 7, obligatoires en PHP 8
+isset($sum_tab) OR $sum_tab = array();
+isset($sum_tab['id']) OR $sum_tab['id'] = array();
+?><?php
 $content = "
 <style>
 table {
@@ -55,7 +59,7 @@ font-size: 15px;
 <page backtop=\"5mm\" backbottom=\"5mm\" backleft=\"10mm\" backright=\"2mm\" footer=\"page\">
 <span class='span1'>MESDHASA</span><br/>
 <span class='span2'>Informatics fees  </span><br/>
-<span  class='span2'><p>".dateVersChainetext($this->uri->segment(3))." ".au." ".dateVersChainetext($this->uri->segment(4))."<br/><br/> </p></span>
+<span  class='span2'><p>".dateVersChainetext($this->uri->segment(3))." au ".dateVersChainetext($this->uri->segment(4))."<br/><br/> </p></span>
 <table>
 <thead>
 <tr>
@@ -100,7 +104,7 @@ $content .= "</tbody>
 </tr>
 </thead>
 <tbody>";
-for ($a = 0; $a < count($sum_tab['id']); $a++) {
+for ($a = 0; $a < sigco_count($sum_tab['id']); $a++) {
 
 $b=$i*250;
 

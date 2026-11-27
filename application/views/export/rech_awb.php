@@ -49,7 +49,7 @@ if (!empty($nowh)) {
                       <select class="form-control" name="compagnie" required>
                       <option value="">---- Compagnie ----</option>
                       <?php foreach($compagnie as $row){?>
-                      <option value="<?php echo $row->idcompagnie?>"><?php echo strtoupper($row->compagnie)?></option>
+                      <option value="<?php echo e($row->idcompagnie);?>"><?php echo strtoupper($row->compagnie)?></option>
 
                       <?php }?>
                       </select>
@@ -110,13 +110,13 @@ if (!empty($nowh)) {
 													<tr style="text-decoration: line-through;">
 				                    <td class="center"><?php echo $r;?></td>
 				                    <td class="center"><?php echo $row->code_warehouse.'-'.$row->no_warehouse;?></td>
-				                    <td class="center"><?php echo $row->awb_number?></td>
-				                    <td class="center"><?php echo $row->name_consignee?></td>
-				                    <td class="center"><?php echo $row->address_consignee?></td>
-				                    <td class="center"><?php echo $row->gross_weight?></td>
-				                    <td class="center"><?php echo $row->nature_and_quantity?></td>
+				                    <td class="center"><?php echo e($row->awb_number);?></td>
+				                    <td class="center"><?php echo e($row->name_consignee);?></td>
+				                    <td class="center"><?php echo e($row->address_consignee);?></td>
+				                    <td class="center"><?php echo e($row->gross_weight);?></td>
+				                    <td class="center"><?php echo e($row->nature_and_quantity);?></td>
 				                    <td class="center">
-				                    <a href="<?php echo base_url()?>modifier_Airway_Bill/<?php echo $row->awb_number;?>" class="btn btn-xs btn-primary" role="button">
+				                    <a href="<?php echo base_url()?>modifier_Airway_Bill/<?php echo e($row->awb_number);?>" class="btn btn-xs btn-primary" role="button">
 				                    <i class="ace-icon fa fa-edit bigger-120" aria-hidden="false"></i>
 				                    </a>
 				                    </td>
@@ -125,13 +125,13 @@ if (!empty($nowh)) {
 													<tr>
 														<td class="center"><?php echo $r;?></td>
 														<td class="center"><?php echo $row->code_warehouse.'-'.$row->no_warehouse;?></td>
-														<td class="center"><?php echo $row->awb_number?></td>
-														<td class="center"><?php echo $row->name_consignee?></td>
-														<td class="center"><?php echo $row->address_consignee?></td>
-														<td class="center"><?php echo $row->gross_weight?></td>
-														<td class="center"><?php echo $row->nature_and_quantity?></td>
+														<td class="center"><?php echo e($row->awb_number);?></td>
+														<td class="center"><?php echo e($row->name_consignee);?></td>
+														<td class="center"><?php echo e($row->address_consignee);?></td>
+														<td class="center"><?php echo e($row->gross_weight);?></td>
+														<td class="center"><?php echo e($row->nature_and_quantity);?></td>
 														<td class="center">
-														<a href="<?php echo base_url()?>modifier_Airway_Bill/<?php echo $row->awb_number;?>" class="btn btn-xs btn-primary" role="button">
+														<a href="<?php echo base_url()?>modifier_Airway_Bill/<?php echo e($row->awb_number);?>" class="btn btn-xs btn-primary" role="button">
 														<i class="ace-icon fa fa-edit bigger-120" aria-hidden="false"></i>
 														</a>
 														</td>

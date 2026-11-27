@@ -6,13 +6,13 @@ if(isset($_SESSION['droit']['a13']) and $_SESSION['droit']['a13']=="1"  ) {
 require_once('tete.php');
 $i=0;$total=0;
 foreach($lessegments as $row){}
-foreach($lespaiements as $pmt){$i++;$total+=$pmt->apayer;}
+foreach($lespaiements as $pmt){$i++;$total+= (float) $pmt->apayer;}
   $total_poids = 0;
   $res = array ();
   $res = $this->Parser->get_degroupage($row->awbl);
   if(count($res)>0){
   	foreach($res as $r){
-  		$total_poids += $r->poids;
+  		$total_poids += (float) $r->poids;
   	}
   }
 
@@ -273,19 +273,19 @@ foreach($lespaiements as $pmt){$i++;$total+=$pmt->apayer;}
             // print_r($lespaiements);
           $codepaiement=array();$i=0;$somme = 0;$discount = 0;$apayer2 = 0;$paiement=0;foreach ($lespaiements as $pmt){;
               $i++;
-              $somme += $pmt->apayer;
-              $paiement += $pmt->payer;
-              $discount += $pmt->rabais;
+              $somme += (float) $pmt->apayer;
+              $paiement += (float) $pmt->payer;
+              $discount += (float) $pmt->rabais;
               $apayer2=$somme-$discount ;
 
               // echo "string".$pmt->codetx;
               if($pmt->codetx=="PMT"){
-                $versement+=$pmt->payer;
+                $versement+= (float) $pmt->payer;
                $codepaiement[] = $pmt->nopaiement;
 
               }
               if($pmt->codetx=="FAC"){
-                $total_du+=$pmt->apayer;
+                $total_du+= (float) $pmt->apayer;
 
               if($pmt->apayer !='0'){
 ?>

@@ -59,18 +59,18 @@ if(isset($_SESSION['droit']['a7']) and $_SESSION['droit']['a7']=="1"  ) {
 															<?php }else{?>
 																<tr>
 																	<td class="center"><?php echo $r;?></td>
-																	<td class="center"><?php echo $row->awb_number;?></td>
-																	<td class="center"><?php echo $row->qty;?></td>
-																	<td class="center"><?php echo $row->qty;?></td>
+																	<td class="center"><?php echo e($row->awb_number);?></td>
+																	<td class="center"><?php echo e($row->qty);?></td>
+																	<td class="center"><?php echo e($row->qty);?></td>
 																	<!-- <td class="center"><?php //echo $row->nature_and_quantity;?></td> -->
-																	<td class="center"><?php echo $row->gross_weight;?></td>
-																	<input type="hidden" name="lesid[]" value="<?php echo $row->id_awbl?>">
+																	<td class="center"><?php echo e($row->gross_weight);?></td>
+																	<input type="hidden" name="lesid[]" value="<?php echo e($row->id_awbl);?>">
 																	<!-- <td class="center"><?php //echo $row->name_consignee;?></td> -->
-																	<td class="center"><?php echo $row->total_freight;?></td>
+																	<td class="center"><?php echo e($row->total_freight);?></td>
 																	<!-- <td class="center"><?php //echo $row->total_weight_charge;?></td> -->
 																	<!-- <td class="center"><?php //echo $row->currency;?></td> -->
 																	<td class="center">
-																<input type="checkbox" value="<?php echo $this->uri->segment(3);?>" id="vol_valide<?php echo $row->id_awbl?>" name="vol_valide<?php echo $row->id_awbl?>"   class="choixcb">
+																<input type="checkbox" value="<?php echo $this->uri->segment(3);?>" id="vol_valide<?php echo e($row->id_awbl);?>" name="vol_valide<?php echo e($row->id_awbl);?>"   class="choixcb">
 																</td>
 
 																		</tr>

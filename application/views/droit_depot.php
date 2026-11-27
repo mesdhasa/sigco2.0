@@ -133,7 +133,7 @@ if (($row->droitdepot=='') ){
 													$result = $this->Parser->get_degroupage($res->awb);
 													if(count($result)>0){
 													foreach($result as $r){
-													$total_poids += $r->poids;
+													$total_poids += (float) $r->poids;
 													}
 												}
 													$restant=$res->weight-$total_poids;

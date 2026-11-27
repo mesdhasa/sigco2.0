@@ -1,7 +1,20 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Livraison extends CI_Controller {
+/**
+ * Controle d'acces cote serveur (Bloc 02 - AUDIT-002/003/007, voir MY_Controller).
+ * Livraison : a12 pour toutes les methodes, livraisons en POST.
+ */
+class Livraison extends MY_Controller {
+
+	protected $acces_defaut = 'a12';
+
+	protected $acces = array();
+
+	protected $post_requis = array(
+		'livrer', 'livrer2',
+	);
+
 
 	public function index()
 	{

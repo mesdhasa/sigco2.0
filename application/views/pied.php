@@ -25,12 +25,17 @@
 	<!-- basic scripts -->
 
 	<!--[if !IE]> -->
-	<script src="<?php echo base_url()?>assets/js/jquery-2.1.4.min.js"></script>
+	<script src="<?php echo base_url()?>assets/js/jquery-3.8.0.min.js"></script>
+	<script src="<?php echo base_url()?>assets/js/jquery-migrate-3.6.0.min.js"></script>
+	<?php $sigco_ci =& get_instance(); ?>
+	<script>window.SIGCO_CSRF = {nom: <?php echo json_encode($sigco_ci->security->get_csrf_token_name())?>, valeur: <?php echo json_encode($sigco_ci->security->get_csrf_hash())?>};</script>
+	<script src="<?php echo base_url()?>assets/js/sigco-securite.js"></script>
+
 
 	<!-- <![endif]-->
 
 	<!--[if IE]>
-<script src="assets/js/jquery-1.11.3.min.js"></script>
+<script src="assets/js/jquery-3.8.0.min.js"></script>
 <![endif]-->
 	<script type="text/javascript">
 
@@ -78,17 +83,17 @@
 		$("#awblnum").mask("999-99999999");
 	});
 	</script>
-	<script src="<?php echo base_url()?>assets/js/bootstrap.min.js"></script>
+	<script src="<?php echo base_url()?>assets/js/bootstrap-3.4.1.min.js"></script>
 
 	<!-- page specific plugin scripts -->
-	<script src="<?php echo base_url()?>assets/js/jquery-ui.min.js"></script>
+	<script src="<?php echo base_url()?>assets/js/jquery-ui-1.14.2.min.js"></script>
 	<script src="<?php echo base_url()?>assets/js/jquery.ui.touch-punch.min.js"></script>
 
 	<!-- ace scripts -->
 	<script src="<?php echo base_url()?>assets/js/ace-elements.min.js"></script>
 	<script src="<?php echo base_url()?>assets/js/ace.min.js"></script>
 	<script src="<?php echo base_url()?>assets/js/mesjs.js"></script>
-	<script src="<?php echo base_url()?>assets/js/Chart.bundle.js"></script>
+	<script src="<?php echo base_url()?>assets/js/Chart.bundle-2.9.4.min.js"></script>
 	<script src="<?php echo base_url()?>assets/js/utils.js"></script>
 	<script src="<?php echo base_url()?>assets/js/jquery.maskedinput.min.js"></script>
 

@@ -1,7 +1,53 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 require_once APPPATH."/third_party/ctools.php";
-class Facture extends CI_Controller {
+/**
+ * Controle d'acces cote serveur (Bloc 02 - AUDIT-002/003/007, voir MY_Controller).
+ * Facturation : a15 facturation, a16 rapport, a17 rapports de caisse, a19 paiements. Ecritures en POST.
+ */
+class Facture extends MY_Controller {
+
+	protected $acces_defaut = 'a15';
+
+	protected $acces = array(
+		'searchFacture' => 'a19',
+		'searchFac' => 'a19',
+		'payerfacture' => 'a19',
+		'Rembourser_facture' => 'a19',
+		'deleteFacture_payer' => 'a19',
+		'description_pmt' => 'a19',
+		'degroup' => 'a19',
+		'caissepdf_usd' => array('a15', 'a19'),
+		'caissepdf_htg' => array('a15', 'a19'),
+		'imprimerecu' => array('a15', 'a19'),
+		'rapport' => 'a16',
+		'rap_caisse' => 'a17',
+		'rap_caisse2' => 'a17',
+		'details_de_caisse' => 'a17',
+		'recherche_details_de_caisse' => 'a17',
+		'details_de_caisse_pdf' => 'a17',
+		'informatics_fees' => 'a17',
+		'recherche_informatics_fees' => 'a17',
+		'informatics_fees_pdf' => 'a17',
+		'import_fees' => 'a17',
+		'recherche_import_fees' => 'a17',
+		'import_fees_pdf' => 'a17',
+		'Freight' => 'a17',
+		'recherche_freight' => 'a17',
+		'freight_pdf' => 'a17',
+		'due_agent' => 'a17',
+		'recherche_due_agent' => 'a17',
+		'due_agent_pdf' => 'a17',
+		'statistics_weight' => 'a17',
+		'recherche_statistics_weight' => 'a17',
+		'recherche_no' => array('a16', 'a17'),
+		'recherche_no2' => array('a16', 'a17'),
+	);
+
+	protected $post_requis = array(
+		'degrouper', 'update_degrouper', 'del_degrouper', 'ajouterMontant', 'ajouterMontant2', 'deleteFacture', 'validerfacture', 'update_buill', 'payerfacture', 'Rembourser_facture', 'deleteFacture_payer', 'rabais_off', 'add_awb_ex', 'update_buill_exp', 'update_buill_mesdhasa', 'ajouterMontant_exp', 'ajouterMontant_mesdhasa', 'rabais_off_mesdhasa', 'deleteFacture_exp', 'deleteFacture_mesdhasa', 'ajouterMontant2_exp', 'ajouterMontant2_mesdhasa', 'validerfacture_exp', 'validerfacture_mesdhasa',
+	);
+
 
 public function __construct(){
 parent::__construct();
@@ -66,7 +112,7 @@ $segmentid =$this->input->post('segmentid');
 $awbl2		=	$this->input->post('no_bill');
 $value=$this->Parser->verify_awbl2($awbl2);
 if($value){
-$this->session->set_flashdata('sms','AWBL: '.$awbl2.' existe d&eacute;j&agrave;');
+$this->session->set_flashdata('sms','AWBL: '.html_escape($awbl2).' existe d&eacute;j&agrave;');
 redirect('facture/facturerbill/f/rech/'.$_POST['awbl_1'].'/'.$segmentid);
 }else{
 // if (isset($_POST['weight'] > $_POST['d_depot_comp']))
@@ -918,7 +964,10 @@ redirect('login');
 }
 $data['act']			=	$this->uri->segment(3);
 $data['y']				=	$this->uri->segment(4);
-$data['lesfactures']	= 	$this->Parser->get_factures();
+// Pagination serveur (AUDIT-011/018) : 9 350 factures n'etaient plus affichables en une page
+$numeros = $this->Parser->numeros_factures_impayees();
+$data['pagination'] = sigco_pagination(count($numeros), 50);
+$data['lesfactures']	= 	$this->Parser->get_factures_page(array_slice($numeros, $data['pagination']['offset'], $data['pagination']['par_page']));
 $this->load->view('rapportFacture',$data);
 }
 public function rap_caisse()
@@ -1285,7 +1334,7 @@ redirect('login');
 $awbl	=$this->input->post('awblnum');
 $value=$this->Parser->verify_awbl($awbl);
 if($value){
-$this->session->set_flashdata('sms2','Ce code: '.$addawbl.' existe d&eacute;j&agrave;');
+$this->session->set_flashdata('sms2','Ce code: '.html_escape($addawbl).' existe d&eacute;j&agrave;');
 redirect('facture');;
 }else{
 redirect('facture/add_awb_export2/'.$awbl);

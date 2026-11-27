@@ -1,4 +1,7 @@
 <?php
+// Compatibilite PHP 8 (Bloc 02) : initialisations implicites en PHP 7, obligatoires en PHP 8
+isset($c) OR $c = 0;
+?><?php
 
 $content = "
 <style>
@@ -94,7 +97,7 @@ font-size: 15px;
 <page backtop=\"10mm\" backbottom=\"5mm\" backleft=\"10mm\" backright=\"2mm\" footer=\"page\">
 <span class='span1'>AMERIJET - PAP STATION</span><p class='span3'><img  class='span3' src=\"http://sigco.mesdhasa.com/sigco/assets/images/logo.png\"/></p><br/><br/>
 <span class='span4'>Ground Handling Fees Report Cover Page</span><br/><br/>
-<span class='span5'>Period:".dateVersChainetext($date1)." ".au." ".dateVersChainetext($date2)."</span><br/><br/>
+<span class='span5'>Period:".dateVersChainetext($date1)." au ".dateVersChainetext($date2)."</span><br/><br/>
 <span class='span6'>To: posinvoice@amerijet.com</span><br/><br/>
 <span class='span7'>From: YASMINE M. PAUL /PAP</span><br/><br/>
 <span class='span8'>Ref:  PAP WEEKLY EXPENSE REPORT</span><br/><br/>

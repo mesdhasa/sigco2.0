@@ -18,7 +18,7 @@ if(isset($_SESSION['droit']['a15']) and $_SESSION['droit']['a15']=="1"  ) {
 
 	 		$apayer2=$row2->apayer-$row2->rabais;
 	   $somme += $apayer2;
-		  $paiement += $row2->payer;
+		  $paiement += (float) $row2->payer;
 			$balance = ($somme-$paiement);
 	 			if($row2->codetx!="FAC"){
 						$i++;

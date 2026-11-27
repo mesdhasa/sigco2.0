@@ -1,7 +1,20 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Recherche extends CI_Controller {
+/**
+ * Controle d'acces cote serveur (Bloc 02 - AUDIT-002/003/007, voir MY_Controller).
+ * Recherche : a13 (comme les vues), suppressions en POST.
+ */
+class Recherche extends MY_Controller {
+
+	protected $acces_defaut = 'a13';
+
+	protected $acces = array();
+
+	protected $post_requis = array(
+		'deleteFacture_detail', 'deleteFacture_detail1',
+	);
+
 
 	public function index()
 	{

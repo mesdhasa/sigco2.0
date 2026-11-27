@@ -1,7 +1,54 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 require_once APPPATH."/third_party/ctools.php";
-class Import extends CI_Controller {
+/**
+ * Controle d'acces cote serveur (Bloc 02 - AUDIT-002/003/007, voir MY_Controller).
+ * Import : a2 manifestes XML, a3 prepaid/collect et notifications, a4 AWBL et vols, a5 pointage, a13 detail, a30 numero de rapport.
+ */
+class Import extends MY_Controller {
+
+	protected $acces_defaut = NULL;
+
+	protected $acces = array(
+		'index' => 'a2',
+		'creer' => 'a2',
+		'manifest' => 'a2',
+		'xml' => 'a2',
+		'add' => 'a2',
+		'save' => 'a2',
+		'supprimerVol' => 'a2',
+		'precol' => 'a3',
+		'prepaidcollect' => 'a3',
+		'ajax_prepaidcollect' => 'a3',
+		'notifbill' => 'a3',
+		'notif_buill' => 'a3',
+		'Set_memo' => 'a3',
+		'add_memo' => 'a3',
+		'recherche_notification1' => 'a3',
+		'recherche_notification2' => 'a3',
+		'set_notification3' => 'a3',
+		'awbl' => 'a4',
+		'recherchevol' => 'a4',
+		'editcustum' => 'a4',
+		'deletecustum' => 'a4',
+		'updatecustum' => 'a4',
+		'updatebill' => 'a4',
+		'ajouterawbl' => 'a4',
+		'newawbl' => 'a4',
+		'add_awbl' => 'a4',
+		'manifestxls' => 'a4',
+		'manifestpdf' => 'a4',
+		'pointage' => 'a5',
+		'add_pointage' => 'a5',
+		'deletepointage' => 'a5',
+		'detail' => 'a13',
+		'set_numRapport' => 'a30',
+	);
+
+	protected $post_requis = array(
+		'add', 'save', 'supprimerVol', 'ajax_prepaidcollect', 'notifbill', 'notif_buill', 'add_memo', 'set_notification3', 'deletecustum', 'updatecustum', 'updatebill', 'add_awbl', 'add_pointage', 'deletepointage', 'set_numRapport',
+	);
+
 
 
 
@@ -60,7 +107,7 @@ class Import extends CI_Controller {
 			$value=$this->Parser->verify($custum);
 
 			if($value){
-				$this->session->set_flashdata('sms','Ce code: '.$custum.' existe d&eacute;j&agrave;');
+				$this->session->set_flashdata('sms','Ce code: '.html_escape($custum).' existe d&eacute;j&agrave;');
 				redirect('import/creer/i/ajouter');
 			}else{
 
@@ -473,7 +520,7 @@ class Import extends CI_Controller {
 			$value=$this->Parser->verify_awbl($addawbl);
 
 			if($value){
-				$this->session->set_flashdata('sms2','Ce code: '.$addawbl.' existe d&eacute;j&agrave;');
+				$this->session->set_flashdata('sms2','Ce code: '.html_escape($addawbl).' existe d&eacute;j&agrave;');
 				redirect('import/awbl/i/lister/'.$id);
 			}else{
 

@@ -66,7 +66,7 @@ font-size: 15px;
 <page backtop=\"5mm\" backbottom=\"5mm\" backleft=\"10mm\" backright=\"2mm\" footer=\"page\">
 <span class='span1'>MESDHASA</span><br/>
 <span class='span2'>Storage Fees</span><br/>
-<span  class='span2'><p>".dateVersChainetext($this->uri->segment(5)."-".$this->uri->segment(4)."-".$this->uri->segment(3))." ".au." ".dateVersChainetext($this->uri->segment(8)."-".$this->uri->segment(7)."-".$this->uri->segment(6))."<br/><br/> </p></span>
+<span  class='span2'><p>".dateVersChainetext($this->uri->segment(5)."-".$this->uri->segment(4)."-".$this->uri->segment(3))." au ".dateVersChainetext($this->uri->segment(8)."-".$this->uri->segment(7)."-".$this->uri->segment(6))."<br/><br/> </p></span>
 <table>
 <thead>
 <tr>
@@ -126,7 +126,7 @@ if(count($lesdepots)>0){
 	$result = $this->Parser->get_degroupage($res->awb);
 	if(count($result)>0){
 	foreach($result as $r){
-	$total_poids += $r->poids;
+	$total_poids += (float) $r->poids;
 	}
 }
 	$restant=$res->weight* 2.20462-$total_poids;
@@ -165,14 +165,14 @@ $content .= "<tr  class=\"color\" >
 
 </tr>";
 if($res->monnaie=="USD"){
-	$totalusd+=$res->montant_hc;
-	$totalfacusd+=$res->montant_hc1;
+	$totalusd+= (float) $res->montant_hc;
+	$totalfacusd+= (float) $res->montant_hc1;
 	$totaldueusd+=round($resul,2);
 
 }
 if($res->monnaie=="HTG"){
-	$totalhtg+=$res->montant_hc;
-	$totalfachtg+=$res->montant_hc1;
+	$totalhtg+= (float) $res->montant_hc;
+	$totalfachtg+= (float) $res->montant_hc1;
 	$totalduehtg+=round($resul,2);
 }
 

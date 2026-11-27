@@ -100,27 +100,27 @@ $t=0;foreach($lessegments as $row){$t++;?>
         <td class="center"><?php echo dateVersChainetext($row->Date_of_departure);?></td>
 		<td class="center"><?php echo dateVersChainetext($row->Date_of_arrival);?></td>
 		<td><?php echo strtoupper($row->compagnie);?></td>
-		<td><?php echo $row->custum;?></td>
-		<td><?php echo $row->Voyage_number;?></td>
-		<td class="center"><?php echo $row->Registration_number_of_transport_code;?></td>
-		<td class="center"><?php echo $row->Place_of_departure_code;?></td>
+		<td><?php echo e($row->custum);?></td>
+		<td><?php echo e($row->Voyage_number);?></td>
+		<td class="center"><?php echo e($row->Registration_number_of_transport_code);?></td>
+		<td class="center"><?php echo e($row->Place_of_departure_code);?></td>
 		<td class="center">
-		<a href="<?php echo base_url()?>import/awbl/i/lister/<?php echo $row->id;?>" class="btn btn-xs btn-info" role="button">
+		<a href="<?php echo base_url()?>import/awbl/i/lister/<?php echo e($row->id);?>" class="btn btn-xs btn-info" role="button">
 		<i class="ace-icon fa fa-eye bigger-120" aria-hidden="false"></i>
 		</a>
 		</td>
 		<td class="center">
-		<a href="<?php echo base_url()?>import/ajouterawbl/i/lister/<?php echo $row->id;?>" class="btn btn-xs btn-success" role="button">
+		<a href="<?php echo base_url()?>import/ajouterawbl/i/lister/<?php echo e($row->id);?>" class="btn btn-xs btn-success" role="button">
 		<i class="ace-icon fa fa-plus bigger-120" aria-hidden="false"></i>
 		</a>
 		</td>
 		<td class="center">
-		<a href="<?php echo base_url()?>import/editcustum/i/ajouter/<?php echo $row->id;?>" class="btn btn-xs btn-primary" role="button">
+		<a href="<?php echo base_url()?>import/editcustum/i/ajouter/<?php echo e($row->id);?>" class="btn btn-xs btn-primary" role="button">
 		<i class="ace-icon fa fa-edit bigger-120" aria-hidden="false"></i>
 		</a>
 		</td>
 		<td class="center">
-			<a class="btn btn-xs btn-danger" href="#" onclick="confirmation_lien('Do you want to delete ?','<?php echo base_url()?>import/deletecustum/i/ajouter/<?php echo $row->id;?>')">
+			<a class="btn btn-xs btn-danger" href="#" onclick="confirmation_lien('Do you want to delete ?','<?php echo base_url()?>import/deletecustum/i/ajouter/<?php echo e($row->id);?>')">
 		<i class="ace-icon fa fa-trash bigger-120" aria-hidden="false"></i>
 		</a>
 		</td>

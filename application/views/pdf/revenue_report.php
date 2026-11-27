@@ -62,8 +62,8 @@ foreach($lesrevenue as $row){}
 								$element .=$row2->description."<br/>";
 							 }
 						 }
-								$a+=$row->weight_charge;
-								$b+=$row->freight;
+								$a+= (float) $row->weight_charge;
+								$b+= (float) $row->freight;
               $content .= "<tr>
               <td align='center'>".dateVersChainetext($row->Date_of_arrival)."</td>
               <td align='center'>".$row->awbl."<br/>".$element."&nbsp;&nbsp;</td>

@@ -10,12 +10,12 @@ $datesession = $this->session->ladate;
 
 <div class="page-header">
 <h1>
-<a href="<?php echo $_SERVER['HTTP_REFERER']?>"><i class="fa fa-arrow-circle-left" aria-hidden="true">Back</i></a>
+<a href="<?php echo e(sigco_url_retour('import/recherchevol/i/lister'))?>"><i class="fa fa-arrow-circle-left" aria-hidden="true">Back</i></a>
 <small><i class="ace-icon fa fa-angle-double-right"></i>Air Way Bill</small></h1>
 </div>
 <div class="col-lg-7 col-lg-offset-5">
 <p style="text-align:right; margin-top:-30px;">
-<strong style="font-size:20px; text-align:right;"> <?php echo $row->compagnie?> | <?php echo $row->custum?> | <?php echo $row->refdouane?> | <?php echo dateVersChainetext($row->Date_of_arrival);?> </strong>
+<strong style="font-size:20px; text-align:right;"> <?php echo e($row->compagnie);?> | <?php echo e($row->custum);?> | <?php echo e($row->refdouane);?> | <?php echo dateVersChainetext($row->Date_of_arrival);?> </strong>
 
 </p>
 </div>
@@ -57,79 +57,79 @@ $datesession = $this->session->ladate;
 
 												<tr>
 													<td class="center"><?php 	echo $g;?></td>
-													<td class="center"><?php 	echo $row->awbl;?></td>
+													<td class="center"><?php echo e($row->awbl);?></td>
 
-													<input type="hidden" name="lesid[]" value="<?php echo $row->idbuil?>">
+													<input type="hidden" name="lesid[]" value="<?php echo e($row->idbuil);?>">
 													<td class="center">
 													<span class="input-group">
-														<input autocomplete="off" type="text" size="7%"  class="form-control" id="qty" placeholder="qty" name="qty<?php echo $row->idbuil?>" value="<?php echo $row->qty?>">
+														<input autocomplete="off" type="text" size="7%"  class="form-control" id="qty" placeholder="qty" name="qty<?php echo e($row->idbuil);?>" value="<?php echo e($row->qty);?>">
 														</span>
 													</td>
 													<td class="center">
 													<span class="input-group">
-														<input  autocomplete="off" type="text" size="7%" class="form-control" id="qtytotal" placeholder="qtytotal" name="qtytotal<?php echo $row->idbuil?>" value="<?php echo $row->qtytotal?>">
+														<input  autocomplete="off" type="text" size="7%" class="form-control" id="qtytotal" placeholder="qtytotal" name="qtytotal<?php echo e($row->idbuil);?>" value="<?php echo e($row->qtytotal);?>">
 														</span>
 													</td>
-													<td class="left"><?php 		echo $row->package;?></td>
-													<td class="center"><?php 	echo $row->weight;?></td>
+													<td class="left"><?php echo e($row->package);?></td>
+													<td class="center"><?php echo e($row->weight);?></td>
 													<td class="left">
 														<span class="input-group">
-														<textarea autocomplete="off" id="consignee" name="consignee<?php echo $row->idbuil?>" class="form-control"><?php echo $row->consignee?></textarea>
+														<textarea autocomplete="off" id="consignee" name="consignee<?php echo e($row->idbuil);?>" class="form-control"><?php echo e($row->consignee);?></textarea>
 														</span>
 													</td>
 
 													<?php if($row->prepaid=="1"){?>
 														<td class="center">
-															<input  autocomplete="off" type="hidden" size="8%"  class="form-control" id="freight" placeholder="freight" name="freight<?php echo $row->idbuil?>" value="<?php echo $row->freight?>">
+															<input  autocomplete="off" type="hidden" size="8%"  class="form-control" id="freight" placeholder="freight" name="freight<?php echo e($row->idbuil);?>" value="<?php echo e($row->freight);?>">
 														</td>
 													<?php }else if ($row->nocharge=="1"){?>
 														<td class="center">
-															<input autocomplete="off" type="hidden" size="8%"  class="form-control" id="freight" placeholder="freight" name="freight<?php echo $row->idbuil?>" value="<?php echo $row->freight?>">
+															<input autocomplete="off" type="hidden" size="8%"  class="form-control" id="freight" placeholder="freight" name="freight<?php echo e($row->idbuil);?>" value="<?php echo e($row->freight);?>">
 														</td>
 													<?php }else {?>
 														<td class="center">
 														<span class="input-group">
-															<input autocomplete="off" type="text" size="8%"  class="form-control" id="freight" placeholder="freight" name="freight<?php echo $row->idbuil?>" value="<?php echo $row->freight?>">
+															<input autocomplete="off" type="text" size="8%"  class="form-control" id="freight" placeholder="freight" name="freight<?php echo e($row->idbuil);?>" value="<?php echo e($row->freight);?>">
 															</span>
 														</td>
 														<?php }?>
            								<?php if( $row->weight_charge=="0.00"){?>
 														<td class="center">
 														<span class="input-group">
-															<input autocomplete="off" type="text" size="8%"  class="form-control" id="charge" placeholder="weight charge" name="charge<?php echo $row->idbuil?>" value="">
+															<input autocomplete="off" type="text" size="8%"  class="form-control" id="charge" placeholder="weight charge" name="charge<?php echo e($row->idbuil);?>" value="">
 															</span>
 															</td>
 														<?php }else {?>
 															<td class="center">
 															<span class="input-group">
-																<input autocomplete="off" type="text" size="8%"  class="form-control" id="charge" placeholder="weight charge" name="charge<?php echo $row->idbuil?>" value="<?php echo $row->weight_charge?>">
+																<input autocomplete="off" type="text" size="8%"  class="form-control" id="charge" placeholder="weight charge" name="charge<?php echo e($row->idbuil);?>" value="<?php echo e($row->weight_charge);?>">
 																</span>
 																</td>
 															<?php }?>
-													<td class="center"><?php 	echo $row->currency;?></td>
+													<td class="center"><?php echo e($row->currency);?></td>
 													<td class="center">
 													<!-- <?php if($row->prepaid=="1"){?>
 													<i class="fa fa-check" aria-hidden="true"></i>
 													<?php }?> -->
-													<input id="<?php echo $row->awbl;?>a" <?php if($row->prepaid=="1") echo "checked=\"checked\"";?> onchange="Clkppcl('<?php echo $row->awbl;?>','b','c')" class="choixcb" type="checkbox">
+													<input id="<?php echo e($row->awbl);?>a" <?php if($row->prepaid=="1") echo "checked=\"checked\"";?> onchange="Clkppcl('<?php echo e($row->awbl);?>','b','c')" class="choixcb" type="checkbox">
 
 													</td>
 													 <td class="center">
 													<!-- <?php if($row->collect=="1"){?>
 													<i class="fa fa-check" aria-hidden="true"></i>
 													<?php }?> -->
-													<input id="<?php echo $row->awbl;?>b" <?php if($row->collect=="1") echo "checked=\"checked\"";?>  onchange="Clkppcl('<?php echo $row->awbl;?>','a','c')" class="choixcb" type="checkbox">
+													<input id="<?php echo e($row->awbl);?>b" <?php if($row->collect=="1") echo "checked=\"checked\"";?>  onchange="Clkppcl('<?php echo e($row->awbl);?>','a','c')" class="choixcb" type="checkbox">
 
 													</td>
 													<td class="center">
 													<!-- <?php if($row->nocharge=="1"){?>
 													<i class="fa fa-check" aria-hidden="true"></i>
 													<?php }?> -->
-													<input id="<?php echo $row->awbl;?>c" <?php if($row->nocharge=="1") echo "checked=\"checked\"";?>  onchange="Clkppcl('<?php echo $row->awbl;?>','a','b')" class="choixcb" type="checkbox">
+													<input id="<?php echo e($row->awbl);?>c" <?php if($row->nocharge=="1") echo "checked=\"checked\"";?>  onchange="Clkppcl('<?php echo e($row->awbl);?>','a','b')" class="choixcb" type="checkbox">
 
 													</td>
 													<td class="center">
-													<input type="checkbox" value="1" id="shot<?php echo $row->idbuil?>" name="shot<?php echo $row->idbuil?>"   <?php if ($row->shot== "1") echo "checked=\"checked\"";?> class="choixcb">
+													<input type="checkbox" value="1" id="shot<?php echo e($row->idbuil);?>" name="shot<?php echo e($row->idbuil);?>"   <?php if ($row->shot== "1") echo "checked=\"checked\"";?> class="choixcb">
 
 													</td>
 

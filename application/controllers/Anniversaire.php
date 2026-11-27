@@ -1,6 +1,20 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
-class Anniversaire extends CI_Controller {
+/**
+ * Controle d'acces cote serveur (Bloc 02 - AUDIT-002/003/007, voir MY_Controller).
+ * E-mails d'anniversaire : tache planifiee uniquement (ligne de commande ou jeton cron_token).
+ */
+class Anniversaire extends MY_Controller {
+
+	protected $acces_defaut = NULL;
+
+	protected $acces = array(
+		'index' => self::CRON,
+		'liste_anniv' => self::CRON,
+	);
+
+	protected $post_requis = array();
+
 
 	public function index()
 		{

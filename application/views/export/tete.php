@@ -22,13 +22,13 @@ if(!isset($_SESSION['account']['code']) or $_SESSION['account']['code'] == ""){
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 
 		<!-- bootstrap & fontawesome -->
-    <link rel="stylesheet" href="<?php echo base_url()?>assets/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="<?php echo base_url()?>assets/css/bootstrap-3.4.1.min.css" />
     <!-- <link rel="stylesheet" href="<?php echo base_url()?>assets/my/awb.js" /> -->
 		<!-- <link rel="stylesheet" href="<?php echo base_url()?>assets/my/nocache.js" /> -->
-		<link rel="stylesheet" href="<?php echo base_url()?>assets/font-awesome/4.5.0/css/font-awesome.min.css" />
+		<link rel="stylesheet" href="<?php echo base_url()?>assets/font-awesome/4.7.0/css/font-awesome.min.css" />
 
 		<!-- page specific plugin styles -->
-		<link rel="stylesheet" href="<?php echo base_url()?>assets/css/jquery-ui.min.css" />
+		<link rel="stylesheet" href="<?php echo base_url()?>assets/css/jquery-ui-1.14.2.min.css" />
 
 		<!-- text fonts -->
 		<link rel="stylesheet" href="<?php echo base_url()?>assets/css/fonts.googleapis.com.css" />
@@ -141,6 +141,6 @@ if(!isset($_SESSION['account']['code']) or $_SESSION['account']['code'] == ""){
 						</ul><!-- /.breadcrumb -->
 
 						<div class="nav-search" id="nav-search">
-							<span style="font-size:16px; font-weight:bold">Rapport no: <?php if(isset($this->session->ladate))echo dateVersChainetext($this->session->ladate)." | ".$this->session->numrapport;?>&ensp;&ensp;TAUX du jour:<?php echo round($this->session->taux,2)?></span>
+							<span style="font-size:16px; font-weight:bold">Rapport no: <?php if(isset($this->session->ladate))echo dateVersChainetext($this->session->ladate)." | ".$this->session->numrapport;?>&ensp;&ensp;TAUX du jour:<?php echo round((float) $this->session->taux,2)?></span>
 						</div><!-- /.nav-search -->
 					</div>

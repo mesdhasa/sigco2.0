@@ -1,4 +1,8 @@
 <?php
+// Compatibilite PHP 8 (Bloc 02) : initialisations implicites en PHP 7, obligatoires en PHP 8
+isset($sum_tab) OR $sum_tab = array();
+isset($sum_tab['id']) OR $sum_tab['id'] = array();
+?><?php
 $content = "
 <style>
 table {
@@ -55,7 +59,7 @@ font-size: 15px;
 <page backtop=\"5mm\" backbottom=\"5mm\" backleft=\"10mm\" backright=\"2mm\" footer=\"page\">
 <span class='span1'>MESDHASA</span><br/>
 <span class='span2'>Import Fees Paid </span><br/>
-<span  class='span2'><p>".$this->uri->segment(3).",".dateVersChainetext($this->uri->segment(4))." ".au." ".dateVersChainetext($this->uri->segment(5))."<br/><br/> </p></span>
+<span  class='span2'><p>".$this->uri->segment(3).",".dateVersChainetext($this->uri->segment(4))." au ".dateVersChainetext($this->uri->segment(5))."<br/><br/> </p></span>
 <table>
 <thead>
 <tr>
@@ -113,15 +117,15 @@ $content .= "</tbody>
 <tbody>";
 $sum_total_air_fees_usd=0;
 $sum_total_air_fees_htg=0;
-for ($a = 0; $a < count($sum_tab['id']); $a++) {
+for ($a = 0; $a < sigco_count($sum_tab['id']); $a++) {
 
-$sum_total_air_fees_usd+=array_sum ($sum_tab['air_fees_usd'][$sum_tab['id'][$a]]);
-$sum_total_air_fees_htg+=array_sum ($sum_tab['air_fees_htg'][$sum_tab['id'][$a]]);
+$sum_total_air_fees_usd+=sigco_array_sum($sum_tab['air_fees_usd'][$sum_tab['id'][$a]]);
+$sum_total_air_fees_htg+=sigco_array_sum($sum_tab['air_fees_htg'][$sum_tab['id'][$a]]);
 
 $content .= "<tr  class=\"color\" >
 <td  class='color2'  align='center'>".$sum_tab['compagnie'][$sum_tab['id'][$a]]."</td>
-<td  align='center'>".array_sum ($sum_tab['air_fees_usd'][$sum_tab['id'][$a]])."</td>
-<td  align='center'>".array_sum ($sum_tab['air_fees_htg'][$sum_tab['id'][$a]])."</td>
+<td  align='center'>".sigco_array_sum($sum_tab['air_fees_usd'][$sum_tab['id'][$a]])."</td>
+<td  align='center'>".sigco_array_sum($sum_tab['air_fees_htg'][$sum_tab['id'][$a]])."</td>
 
 </tr>";
 }

@@ -4,7 +4,18 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
 
-class Excel extends CI_Controller {
+/**
+ * Controle d'acces cote serveur (Bloc 02 - AUDIT-002/003/007, voir MY_Controller).
+ * Code de demonstration (donnees fictives) : plus aucune methode accessible.
+ */
+class Excel extends MY_Controller {
+
+	protected $acces_defaut = NULL;
+
+	protected $acces = array();
+
+	protected $post_requis = array();
+
 
 	public function index()
 	{

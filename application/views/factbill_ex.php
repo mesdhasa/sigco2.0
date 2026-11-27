@@ -286,7 +286,7 @@ Close
 <?php echo form_open('facture/rabais_off_exp/','class="form-inline"');?>
 <tbody>
 
-<?php  $i=0;$total=0;$total2=0;foreach($lespaiements as $pmt){$i++;$total+=$pmt->apayer;$total2+=$pmt->rabais;$rabais=$pmt->idtx;
+<?php  $i=0;$total=0;$total2=0;foreach($lespaiements as $pmt){$i++;$total+= (float) $pmt->apayer;$total2+= (float) $pmt->rabais;$rabais=$pmt->idtx;
   if ($i==1){?>
 
 <?php }else {?>

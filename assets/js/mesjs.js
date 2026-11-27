@@ -327,7 +327,8 @@ function confirmation_lien(titre,lien){
 								html: "<i class='ace-icon fa fa-check bigger-110'></i>&nbsp; Oui",
 								"class" : "btn btn-primary btn-minier",
 								click: function() {
-									window.location.replace(lien);
+									// Bloc 02 (AUDIT-007) : les actions confirmees partent en POST avec le jeton CSRF
+									if (window.sigcoPost) { window.sigcoPost(lien); } else { window.location.replace(lien); }
 									$( this ).dialog( "close" );
 								}
 							}

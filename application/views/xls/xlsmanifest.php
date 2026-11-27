@@ -1,35 +1,30 @@
 <?php
 mb_internal_encoding('UTF-8');
-use PhpOffice\PhpSpreadsheet\Helper\Sample;
+
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 
 
-$helper = new Sample();
-if ($helper->isCli()) {
-    $helper->log('This example should only be run from a Web Browser' . PHP_EOL);
 
-    return;
-}
 
 // Create new Spreadsheet object
 $objPHPExcel = new Spreadsheet();
 
 $objPHPExcel->getProperties();
 $sheet = $objPHPExcel->getActiveSheet();
-$objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(1, 1, "Date");
-$objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(2, 1, "Flt #");
-$objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(3, 1, "AWB #");
-$objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(4, 1, "Q.Colis");
-$objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(5, 1, "Commodity");
-$objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(6, 1, "Consignee");
-$objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(7, 1, "Wt/LBS");
-$objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(8, 1, "Wt/KGS");
-$objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(9, 1, "Wt/Ch");
-$objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(10, 1, "D/A & D/C");
-$objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(11, 1, "PP");
-$objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(12, 1, "CC");
-$objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(13, 1, "TTL CC");
+$objPHPExcel->getActiveSheet()->setCellValue([1, 1], "Date");
+$objPHPExcel->getActiveSheet()->setCellValue([2, 1], "Flt #");
+$objPHPExcel->getActiveSheet()->setCellValue([3, 1], "AWB #");
+$objPHPExcel->getActiveSheet()->setCellValue([4, 1], "Q.Colis");
+$objPHPExcel->getActiveSheet()->setCellValue([5, 1], "Commodity");
+$objPHPExcel->getActiveSheet()->setCellValue([6, 1], "Consignee");
+$objPHPExcel->getActiveSheet()->setCellValue([7, 1], "Wt/LBS");
+$objPHPExcel->getActiveSheet()->setCellValue([8, 1], "Wt/KGS");
+$objPHPExcel->getActiveSheet()->setCellValue([9, 1], "Wt/Ch");
+$objPHPExcel->getActiveSheet()->setCellValue([10, 1], "D/A & D/C");
+$objPHPExcel->getActiveSheet()->setCellValue([11, 1], "PP");
+$objPHPExcel->getActiveSheet()->setCellValue([12, 1], "CC");
+$objPHPExcel->getActiveSheet()->setCellValue([13, 1], "TTL CC");
 $i = 1;
 $pp = "";
 $cl = "";
@@ -51,25 +46,26 @@ foreach($lesawb as $row){
     }
   
 
-    $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(1, $i,   $row->Date_of_arrival);
-    $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(2, $i,   $row->Voyage_number);
-    $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(3, $i,   $row->awbl);
-    $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(4, $i,   $row->qty);
-    $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(5, $i,   $row->package);
-    $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(6, $i,   $row->consignee);
-    $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(7, $i,   $totallbs);
-    $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(8, $i,   $totalkgs);
-    $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(9, $i,   $row->weight_charge);
-    $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(10, $i,  "");
-    $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(11, $i,  $pp);
-    $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(12, $i,  $cl);
-    $objPHPExcel->getActiveSheet()->setCellValueByColumnAndRow(13, $i,  $row->freight);
+    $objPHPExcel->getActiveSheet()->setCellValue([1, $i], $row->Date_of_arrival);
+    $objPHPExcel->getActiveSheet()->setCellValue([2, $i], $row->Voyage_number);
+    $objPHPExcel->getActiveSheet()->setCellValue([3, $i], $row->awbl);
+    $objPHPExcel->getActiveSheet()->setCellValue([4, $i], $row->qty);
+    $objPHPExcel->getActiveSheet()->setCellValue([5, $i], $row->package);
+    $objPHPExcel->getActiveSheet()->setCellValue([6, $i], $row->consignee);
+    $objPHPExcel->getActiveSheet()->setCellValue([7, $i], $totallbs);
+    $objPHPExcel->getActiveSheet()->setCellValue([8, $i], $totalkgs);
+    $objPHPExcel->getActiveSheet()->setCellValue([9, $i], $row->weight_charge);
+    $objPHPExcel->getActiveSheet()->setCellValue([10, $i], "");
+    $objPHPExcel->getActiveSheet()->setCellValue([11, $i], $pp);
+    $objPHPExcel->getActiveSheet()->setCellValue([12, $i], $cl);
+    $objPHPExcel->getActiveSheet()->setCellValue([13, $i], $row->freight);
 }
 
 // Set active sheet index to the first sheet, so Excel opens this as the first sheet
 $objPHPExcel->setActiveSheetIndex(0);
 $filename = "Manifest_vol_IMPORT" . date("Y-m-d-H:i:s") . "_" . mt_rand() . ".xls";
-ob_end_flush(); // IMPORTANT SINON CELA NE MARCHE PAS
+// Rien ne doit preceder le fichier Excel
+while (ob_get_level() > 0) { ob_end_clean(); }
 // Redirect output to a client’s web browser (Xls)
 header('Content-Type: application/vnd.ms-excel');
 header('Content-Disposition: attachment;filename="'.$filename.'"');
@@ -83,6 +79,6 @@ header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT'); // always modifie
 header('Cache-Control: cache, must-revalidate'); // HTTP/1.1
 header('Pragma: public'); // HTTP/1.0
 $writer = IOFactory::createWriter($objPHPExcel, 'Xls');
-ob_end_clean();// IMPORTANT SINON CELA NE MARCHE PAS
+while (ob_get_level() > 0) { ob_end_clean(); }
 $writer->save('php://output');
 exit;

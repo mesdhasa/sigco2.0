@@ -1,7 +1,20 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 require_once APPPATH."/third_party/ctools.php";
-class Entreprise extends CI_Controller {
+/**
+ * Controle d'acces cote serveur (Bloc 02 - AUDIT-002/003/007, voir MY_Controller).
+ * Configuration de l'entreprise : a34 pour toutes les methodes, ecritures en POST.
+ */
+class Entreprise extends MY_Controller {
+
+	protected $acces_defaut = 'a34';
+
+	protected $acces = array();
+
+	protected $post_requis = array(
+		'ajouter_comp', 'ajouter_currency', 'ajouter_charges_codes', 'ajouter_commodity', 'update_comp', 'update_taux', 'update_frais', 'update_charges_codes', 'update_commodity', 'update_currency', 'supprimerVol', 'ajouter_frais', 'addAWB_comp', 'addAWB_comp_excel',
+	);
+
 
 public function index()
 {
@@ -386,7 +399,7 @@ $value			=	$this->Parser_export->verify_awbl_table($_POST['awbnum']);
 $value2			=	$this->Parser_export->verify_awbl($_POST['awbnum']);
 $value3			=	$this->Parser_export->verify_awbl2($_POST['awbnum']);
 if ($value or $value2 or $value3){
-	$this->session->set_flashdata('sms2','Ce code: '.$_POST['awbnum'].' existe d&eacute;j&agrave;');
+	$this->session->set_flashdata('sms2','Ce code: '.html_escape($_POST['awbnum']).' existe d&eacute;j&agrave;');
 	redirect('entreprise/addawbEntreprise/ent/'.$_POST['idcomp']);
 }else {
 	// code...
@@ -441,7 +454,7 @@ $this->Parser->add_addAWB_comp($data);
 		redirect('entreprise/addawbEntreprise/ent/'.$_POST['idcomp']);
 
 	}else{
-		$this->session->set_flashdata('sms2','Ce code: '.$awblex.'; existe d&eacute;j&agrave;');
+		$this->session->set_flashdata('sms2','Ce code: '.html_escape($awblex).'; existe d&eacute;j&agrave;');
 		redirect('entreprise/addawbEntreprise/ent/'.$_POST['idcomp']);
 	}
 	exit();

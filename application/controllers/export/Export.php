@@ -1,7 +1,69 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 require_once APPPATH."/third_party/ctools.php";
-class Export extends CI_Controller {
+/**
+ * Controle d'acces cote serveur (Bloc 02 - AUDIT-002/003/007, voir MY_Controller).
+ * Export : a7 manifestes et reservations, a8 recherche/liste des AWB d'un vol, a9 warehouse, a10 AWB, a35 ouverture/fermeture de vol, a36 void AWB.
+ */
+class Export extends MY_Controller {
+
+	protected $acces_defaut = NULL;
+
+	protected $acces = array(
+		'index' => 'a7',
+		'ajouter_un_manifeste' => 'a7',
+		'add_manifeste' => 'a7',
+		'edit_manifeste' => array('a7', 'a8'),
+		'supprimer_manifeste' => 'a7',
+		'manifest_pdf' => array('a7', 'a8'),
+		'ExpManifestxls' => array('a7', 'a8'),
+		'add_reservation' => 'a7',
+		'ajouter_reservation' => 'a7',
+		'modifier_reservation' => 'a7',
+		'edit_reservation' => 'a7',
+		'supprimer_reservation' => 'a7',
+		'recherche_reservation' => 'a7',
+		'reservationpdf' => 'a7',
+		'modifier_un_manifeste' => 'a8',
+		'rech_manifeste' => 'a8',
+		'liste_awb' => 'a8',
+		'liste_awb_vol' => 'a8',
+		'add_awb_manifest' => 'a8',
+		'remove_awb_manifest' => 'a8',
+		'fermer_vol' => 'a35',
+		'ouvrir_vol' => 'a35',
+		'antrepot' => 'a9',
+		'add_antrepot' => 'a9',
+		'add_wr' => 'a9',
+		'add_wr2' => 'a9',
+		'ajouter_warehouse' => 'a9',
+		'modifier_ajouter_warehouse' => 'a9',
+		'edit_warehouse' => 'a9',
+		'delete_warehouse_colis' => 'a9',
+		'supprimer_warehouse' => 'a9',
+		'modifier_antrepot' => 'a9',
+		'ajouter_pcs' => 'a9',
+		'warehousepdf' => 'a9',
+		'Airway_Bill' => 'a10',
+		'Airway_Bill2' => 'a10',
+		'modifier_awb' => 'a10',
+		'addawbl_export' => 'a10',
+		'add_other_charges' => 'a10',
+		'delete_other_charges' => 'a10',
+		'deleteAwb' => 'a10',
+		'awb_pdf' => 'a10',
+		'awb_pdf2' => 'a10',
+		'tag4x6' => 'a10',
+		'tag4x4' => 'a10',
+		'edit_awbl_export' => 'a10',
+		'ajax_prepaidcollect' => 'a10',
+		'void_awb' => 'a36',
+	);
+
+	protected $post_requis = array(
+		'ajouter_reservation', 'ajouter_warehouse', 'modifier_ajouter_warehouse', 'edit_warehouse', 'add_manifeste', 'edit_manifeste', 'edit_reservation', 'ajax_prepaidcollect', 'supprimer_manifeste', 'delete_warehouse_colis', 'supprimer_reservation', 'supprimer_warehouse', 'add_awb_manifest', 'fermer_vol', 'ouvrir_vol', 'remove_awb_manifest', 'ajouter_pcs', 'addawbl_export', 'void_awb', 'add_other_charges', 'delete_other_charges', 'deleteAwb',
+	);
+
 
 
 
@@ -41,11 +103,11 @@ $add_noreserv	=	$this->input->post('no_reservation');
 $value=$this->Parser_export->verify_awbl($addawbl);
 $value_noreserv=$this->Parser_export->verify_noreserv($add_noreserv);
 if ($value){
-$this->session->set_flashdata('sms_ajouter_reservation','air waybill: '.$addawbl.' existe d&eacute;j&agrave;');
+$this->session->set_flashdata('sms_ajouter_reservation','air waybill: '.html_escape($addawbl).' existe d&eacute;j&agrave;');
 redirect('creer-une-reservation');
 }
 if ($value_noreserv){
-$this->session->set_flashdata('sms_ajouter_reservation','Ce code: '.$add_noreserv.' existe d&eacute;j&agrave;');
+$this->session->set_flashdata('sms_ajouter_reservation','Ce code: '.html_escape($add_noreserv).' existe d&eacute;j&agrave;');
 redirect('creer-une-reservation');
 }
 elseif(!empty($_POST['no_reservation'])){
@@ -275,7 +337,7 @@ if($_SESSION['account']['code'] == ""){
 redirect('login');
 }
 if ($value){
-$this->session->set_flashdata('sms2','Ce code: '.$addawbl.' existe d&eacute;j&agrave;');
+$this->session->set_flashdata('sms2','Ce code: '.html_escape($addawbl).' existe d&eacute;j&agrave;');
 redirect('warehouse');
 }
 
@@ -432,10 +494,10 @@ $data = array(
 	$is_true=false;
 	$is_true=$this->Parser_export->set_a_reservation($id,$data);
 	if($is_true){
-		$this->session->set_flashdata('sms_modifier',' No réservation &nbsp'.$_POST['no_reservation'].'&nbspModifier avec success cliquez ici &nbsp');
+		$this->session->set_flashdata('sms_modifier',' No réservation &nbsp'.html_escape($_POST['no_reservation']).'&nbspModifier avec success cliquez ici &nbsp');
 			redirect('reservation');
 	}else{
-		$this->session->set_flashdata('sms_modifier',' No réservation &nbsp'.$_POST['no_reservation'].'&nbspModifier avec success cliquez ici &nbsp');
+		$this->session->set_flashdata('sms_modifier',' No réservation &nbsp'.html_escape($_POST['no_reservation']).'&nbspModifier avec success cliquez ici &nbsp');
 			redirect('reservation');
 	}
 }else {
@@ -456,10 +518,10 @@ $data = array(
 $is_true=false;
 $is_true=$this->Parser_export->set_a_reservation($id,$data);
 if($is_true){
-$this->session->set_flashdata('sms_modifier',' No réservation &nbsp'.$noreser.'&nbspInserer avec success,cliquez ici&nbsp');
+$this->session->set_flashdata('sms_modifier',' No réservation &nbsp'.html_escape($noreser).'&nbspInserer avec success,cliquez ici&nbsp');
 redirect('reservation');
 }else{
-$this->session->set_flashdata('sms_modifier',' No réservation &nbsp'.$noreser.'&nbspModier avec success,cliquez ici&nbsp');
+$this->session->set_flashdata('sms_modifier',' No réservation &nbsp'.html_escape($noreser).'&nbspModier avec success,cliquez ici&nbsp');
 redirect('reservation');
 }
 }
@@ -771,10 +833,10 @@ $value2			=	$this->Parser_export->verify_awbl($addawbl);
 
 
 if ($value){
-$this->session->set_flashdata('sms2','Ce code: '.$addawbl.' existe d&eacute;j&agrave1;');
+$this->session->set_flashdata('sms2','Ce code: '.html_escape($addawbl).' existe d&eacute;j&agrave1;');
 redirect('Airway_Bill');
 }elseif ($value2) {
-$this->session->set_flashdata('sms2','Ce code: '.$addawbl.' existe d&eacute;j&agrave2;');
+$this->session->set_flashdata('sms2','Ce code: '.html_escape($addawbl).' existe d&eacute;j&agrave2;');
 redirect('Airway_Bill');
 }else {
 // code...
@@ -795,7 +857,7 @@ redirect('modifier_Airway_Bill/'.$addawbl);
 foreach($res2 as $row){
 }
 // print_r($row->no_awbl);
-$this->session->set_flashdata('sms2','Ce code W/R #: '.$no_warehouse.'&nbsp;&nbsp;&nbsp;'.'AWB #:'.$row->no_awbl.'&nbsp;&nbsp;'.'erreur');
+$this->session->set_flashdata('sms2','Ce code W/R #: '.html_escape($no_warehouse).'&nbsp;&nbsp;&nbsp;'.'AWB #:'.html_escape($row->no_awbl).'&nbsp;&nbsp;'.'erreur');
 redirect('Airway_Bill');
 }
 
@@ -822,10 +884,10 @@ redirect('Airway_Bill2/'.$this->input->post('no_warehouse'));
 $value			=	$this->Parser_export->verify_awbl_table($row->awb);
 $value2			=	$this->Parser_export->verify_awbl($row->awb);
 if ($value){
-$this->session->set_flashdata('sms2','Ce code: '.$row->awb.' existe d&eacute;j&agrave1;');
+$this->session->set_flashdata('sms2','Ce code: '.html_escape($row->awb).' existe d&eacute;j&agrave1;');
 redirect('Airway_Bill2/'.$this->input->post('no_warehouse'));
 }elseif ($value2) {
-$this->session->set_flashdata('sms2','Ce code: '.$row->awb.' existe d&eacute;j&agrave2;');
+$this->session->set_flashdata('sms2','Ce code: '.html_escape($row->awb).' existe d&eacute;j&agrave2;');
 redirect('Airway_Bill2/'.$this->input->post('no_warehouse'));
 }else {
 // code...
