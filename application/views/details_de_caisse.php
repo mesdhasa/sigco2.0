@@ -32,14 +32,14 @@ require_once('tete.php'); ?>
 			</div>
 				<div class="input-group">
 					<!-- <input autocomplete="off" type="text" name="custum" id="custum" size="20%" class="form-control" placeholder="No de vol" value=""/> -->
-					<span class="input-group-btn">
-						<!-- <select class="form-control" name="compagnie" required>
-						<option value="">---- Compagnie ----</option>
-						<?php foreach((isset($compagnie) ? $compagnie : array()) as $row){?>
-						<option value="<?php echo $row->idcompagnie?>"><?php echo strtoupper($row->compagnie)?></option>
-
+					<select class="form-control" name="compagnie">
+						<option value="">---- Tous les transporteurs ----</option>
+						<?php $cc = isset($compagnie_choisie) ? (string) $compagnie_choisie : '';
+						foreach((isset($compagnie) ? $compagnie : array()) as $row){?>
+						<option value="<?php echo $row->idcompagnie?>"<?php echo ($cc !== '' && (string)$row->idcompagnie === $cc) ? ' selected' : ''; ?>><?php echo e(strtoupper($row->compagnie))?></option>
 						<?php }?>
-						</select> -->
+						</select>
+					<span class="input-group-btn">
 					<button class="btn btn-sm btn-primary" type="submit">
 										 <i class="ace-icon fa fa-search"></i>
 									Recherche
@@ -107,7 +107,7 @@ require_once('tete.php'); ?>
   </table>
 </div>
 <?php  if (!empty($lessegments) OR !empty($lessegments2)) {?>
-	<a class="btn btn-sm btn-primary" target="_blank" href="<?php echo base_url()?>facture/details_de_caisse_pdf/<?php echo chaineVersDate($_POST['date1']);?>/<?php echo chaineVersDate($_POST['date2']);?>">
+	<a class="btn btn-sm btn-primary" target="_blank" href="<?php echo base_url()?>facture/details_de_caisse_pdf/<?php echo chaineVersDate($_POST['date1']);?>/<?php echo chaineVersDate($_POST['date2']);?>/<?php echo (isset($compagnie_choisie) && $compagnie_choisie !== '') ? (int)$compagnie_choisie : '0';?>">
 		<i class="ace-icon fa fa-file-pdf-o"></i>
 	Details de caisse
 	</a>

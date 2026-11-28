@@ -1007,6 +1007,8 @@ $_POST['date1']= "";
 $_POST['date2']= "";
 $data['lessegments']= 	array();
 $data['lessegments2']= 	array();
+$data['compagnie']	=	$this->Parser->get_compagnie();
+$data['compagnie_choisie']	=	'';
 $data['act']			=	$this->uri->segment(3);
 $data['y']				=	$this->uri->segment(4);
 $this->load->view('details_de_caisse',$data);
@@ -1019,11 +1021,14 @@ redirect('login');
 }
 $data['lessegments']= 	array();
 $data['lessegments2']= 	array();
+$data['compagnie']	=	$this->Parser->get_compagnie();
+$compagnie	=	$this->input->post('compagnie');
+$data['compagnie_choisie']	=	$compagnie;
 $data['act']	=	$this->uri->segment(3);
 $data['y']		=	$this->uri->segment(4);
 if(!empty($_POST['date1']) && !empty($_POST['date2']) ){
-$data['lessegments']= 	$this->Parser->recherche_details_de_caisse(chaineVersDate($_POST['date1']),chaineVersDate($_POST['date2']));
-$data['lessegments2']= 	$this->Parser->recherche_details_de_caisse2(chaineVersDate($_POST['date1']),chaineVersDate($_POST['date2']));
+$data['lessegments']= 	$this->Parser->recherche_details_de_caisse(chaineVersDate($_POST['date1']),chaineVersDate($_POST['date2']),$compagnie);
+$data['lessegments2']= 	$this->Parser->recherche_details_de_caisse2(chaineVersDate($_POST['date1']),chaineVersDate($_POST['date2']),$compagnie);
 $this->session->no = chaineVersDate($_POST['date1']);
 $this->session->no = chaineVersDate($_POST['date2']);
 }
@@ -1039,9 +1044,10 @@ redirect('login');
 $this->load->library('Pdf');
 $date1 =	$this->uri->segment(3);
 $date2 =	$this->uri->segment(4);
+$compagnie =	$this->uri->segment(5); // filtre transporteur (Bloc 03), 0 = tous
 $data['compagnie']	= 	$this->Parser->get_compagnie();
-$data['lessegments']= 	$this->Parser->recherche_details_de_caisse($date1,$date2);
-$data['lessegments2']= 	$this->Parser->recherche_details_de_caisse2($date1,$date2);
+$data['lessegments']= 	$this->Parser->recherche_details_de_caisse($date1,$date2,$compagnie);
+$data['lessegments2']= 	$this->Parser->recherche_details_de_caisse2($date1,$date2,$compagnie);
 $this->load->view('pdf/details_de_caisse_pdf',$data);
 }
 public function informatics_fees()

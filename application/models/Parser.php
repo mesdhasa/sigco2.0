@@ -570,12 +570,12 @@ class Parser extends CI_Model
 		return $query->result();
 	}
 
-	public function recherche_details_de_caisse($date1, $date2)
+	public function recherche_details_de_caisse($date1, $date2, $compagnie = '')
 	{
 
 		// Parametres valides (AUDIT-001)
 
-		$date1 = sigco_date($date1); $date2 = sigco_date($date2);
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2); $comp = sigco_id($compagnie);
 		$sql = "SELECT hc.awb, nr.num,sg.Date_of_arrival,sg.idcompagnie,sg.Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
 					 FROM norapport as nr
 					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
@@ -583,13 +583,15 @@ class Parser extends CI_Model
 					 INNER JOIN segment as sg ON (sg.id = b.segmentid)
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
 					 where nr.daterapport BETWEEN ? AND ? and b.shot = 0  and b.typeawbl='import'";
-		$query = $this->db->query($sql, array($date1, $date2));
+		$bind = array($date1, $date2);
+		if ($comp > 0) { $sql .= " AND cp.idcompagnie = ?"; $bind[] = $comp; } // filtre transporteur (Bloc 03)
+		$query = $this->db->query($sql, $bind);
 		return $query->result();
 	}
-	public function recherche_details_de_caisse2($date1, $date2)
+	public function recherche_details_de_caisse2($date1, $date2, $compagnie = '')
 	{
 		// Parametres valides (AUDIT-001)
-		$date1 = sigco_date($date1); $date2 = sigco_date($date2);
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2); $comp = sigco_id($compagnie);
 		$sql = "SELECT hc.awb, nr.num,mn.date as Date_of_arrival,mn.flight as Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
 					 FROM norapport as nr
 					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
@@ -598,7 +600,9 @@ class Parser extends CI_Model
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie =mn.idcompagnie)
 					 INNER JOIN buil as b2 ON (b2.awbl=hc.awb)
 					 where nr.daterapport BETWEEN ? AND ? and b2.shot = 0  and b2.typeawbl='export'";
-		$query = $this->db->query($sql, array($date1, $date2));
+		$bind = array($date1, $date2);
+		if ($comp > 0) { $sql .= " AND cp.idcompagnie = ?"; $bind[] = $comp; } // filtre transporteur (Bloc 03)
+		$query = $this->db->query($sql, $bind);
 		return $query->result();
 	}
 	public function recherche_informatics_fees($date1, $date2)

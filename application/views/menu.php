@@ -488,6 +488,16 @@ Lister les groupes
 </li>
 <?php }?>
 
+<?php if(isset($_SESSION['droit']['a42']) and $_SESSION['droit']['a42']=="1"){?>
+<li class="<?php if(isset($y) and $y=="audit") echo "active";?>">
+<a href="<?php echo base_url()?>audit">
+<i class="menu-icon fa fa-history"></i>
+<span class="menu-text"> Tra&ccedil;abilit&eacute; </span>
+</a>
+<b class="arrow"></b>
+</li>
+<?php }?>
+
 <?php if(isset($_SESSION['droit']['a29']) and $_SESSION['droit']['a29']=="1"){?>
 
 <li class="<?php if(isset($act) and $act=="rapports") echo "active open";?>">

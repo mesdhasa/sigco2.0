@@ -1484,12 +1484,13 @@ $data['page']		= 'export/detail_archive_awb';
 $this->load->view('template', $data);
 }
 
-public function archiver_awb()
+public function archiver_awb($id_url = 0)
 {
 if($_SESSION['account']['code'] == ""){
 redirect('login');
 }
-$id    = (int) $this->input->post('id_awbl');
+// id depuis l'URL (bouton confirmation_lien -> sigcoPost) ou depuis le POST.
+$id    = ((int) $id_url > 0) ? (int) $id_url : (int) $this->input->post('id_awbl');
 $motif = substr(trim((string) $this->input->post('motif')), 0, 200);
 if($id <= 0){
 show_404();

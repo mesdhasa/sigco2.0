@@ -989,6 +989,55 @@
 				{
 				return $this->db->where('id_archive', (int) $id)->limit(1)->get('awbl_archive')->row();
 				}
+
+				// ----------------------------------------------------------------
+				// Bloc 03 - Journal de tracabilite (page d'audit).
+				// Types : 'awb' (awbl export), 'manifeste', 'warehouse'.
+				// ----------------------------------------------------------------
+				private function _audit_builder($type, $compagnie, $date1, $date2)
+				{
+				$comp = sigco_id($compagnie);
+				if ($type === 'manifeste')
+				{
+				$this->db->from('manifeste m')
+					->join('compaganie cp', 'cp.idcompagnie = m.idcompagnie', 'left');
+				$this->db->select("m.id_manifeste as id, m.flight as reference, cp.compagnie as transporteur, m.date as date_doc, m.cree_par_nom, m.cree_entreprise, m.cree_ville, m.cree_le, m.modif_par_nom, m.modif_le", FALSE);
+				if ($comp > 0) { $this->db->where('m.idcompagnie', $comp); }
+				if ($date1 !== '' && $date2 !== '') { $this->db->where('DATE(m.cree_le) >=', sigco_date($date1))->where('DATE(m.cree_le) <=', sigco_date($date2)); }
+				$this->db->order_by('m.cree_le IS NULL, m.cree_le DESC, m.id_manifeste DESC', '', FALSE);
+				}
+				elseif ($type === 'warehouse')
+				{
+				$this->db->from('warehouse w')
+					->join('compaganie cp', 'cp.idcompagnie = w.idcompagnie', 'left');
+				$this->db->select("w.id_warehouse as id, w.no_warehouse as reference, cp.compagnie as transporteur, w.ladate as date_doc, w.cree_par_nom, w.cree_entreprise, w.cree_ville, w.cree_le, w.modif_par_nom, w.modif_le", FALSE);
+				if ($comp > 0) { $this->db->where('w.idcompagnie', $comp); }
+				if ($date1 !== '' && $date2 !== '') { $this->db->where('DATE(w.cree_le) >=', sigco_date($date1))->where('DATE(w.cree_le) <=', sigco_date($date2)); }
+				$this->db->order_by('w.cree_le IS NULL, w.cree_le DESC, w.id_warehouse DESC', '', FALSE);
+				}
+				else // awb (awbl export)
+				{
+				$this->db->from('awbl a')
+					->join('manifeste m', 'm.id_manifeste = a.id_manifeste', 'left')
+					->join('compaganie cp', 'cp.idcompagnie = m.idcompagnie', 'left');
+				$this->db->select("a.id_awbl as id, a.awb_number as reference, cp.compagnie as transporteur, a.date_flight as date_doc, a.cree_par_nom, a.cree_entreprise, a.cree_ville, a.cree_le, a.modif_par_nom, a.modif_le", FALSE);
+				if ($comp > 0) { $this->db->where('m.idcompagnie', $comp); }
+				if ($date1 !== '' && $date2 !== '') { $this->db->where('DATE(a.cree_le) >=', sigco_date($date1))->where('DATE(a.cree_le) <=', sigco_date($date2)); }
+				$this->db->order_by('a.cree_le IS NULL, a.cree_le DESC, a.id_awbl DESC', '', FALSE);
+				}
+				}
+
+				public function compter_audit($type, $compagnie = '', $date1 = '', $date2 = '')
+				{
+				$this->_audit_builder($type, $compagnie, $date1, $date2);
+				return $this->db->count_all_results();
+				}
+
+				public function get_audit_page($type, $compagnie, $date1, $date2, $limit, $offset)
+				{
+				$this->_audit_builder($type, $compagnie, $date1, $date2);
+				return $this->db->get('', (int) $limit, (int) $offset)->result();
+				}
 			}
 
 

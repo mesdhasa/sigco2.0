@@ -735,7 +735,7 @@ text-align: right;
 
 .cree_par_awb{
   position: absolute;
-  top: 905px;
+  top: 958px;
   left: 470px;
   width: 265px;
   font-size: 7pt;

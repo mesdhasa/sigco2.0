@@ -688,6 +688,12 @@ if(isset($_SESSION['droit']['a36']) and $_SESSION['droit']['a36']=="1"){?>
   <i class="ace-icon fa fa-trash bigger-120" aria-hidden="false">Delete</i>
   </a>
   <?php } ?>
+  <?php if(isset($_SESSION['droit']['a41']) and $_SESSION['droit']['a41']=="1"){?>
+  <a href="#" onclick="confirmation_lien('Archiver cet AWB et liberer le numero <?php echo e($data->awb_number)?> ? L\'ancien enregistrement restera consultable dans les archives.','<?php echo base_url()?>archiver-awb/<?php echo (int)$data->id_awbl?>')"
+  class="btn btn-sm btn-info">
+  <i class="ace-icon fa fa-archive bigger-120" aria-hidden="false"> Archiver</i>
+  </a>
+  <?php } ?>
 
         <a class="btn btn-sm btn-danger" href="javascript:void(0)" onclick="void_awb()">
         <i class="ace-icon fa fa-trash bigger-120" aria-hidden="false"></i>
