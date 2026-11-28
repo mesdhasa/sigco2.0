@@ -288,3 +288,58 @@ if ( ! function_exists('sigco_pagination'))
 		);
 	}
 }
+
+if ( ! function_exists('sigco_traceur'))
+{
+	/**
+	 * Tracabilite (Bloc 03) : colonnes cree_* / modif_* a enregistrer sur un document
+	 * (AWB, manifeste, warehouse) au moment de sa creation ou de sa modification.
+	 * La station = entreprise + ville du compte connecte (decision client).
+	 * Les valeurs sont figees a l'instant de l'action : un document garde le nom et la
+	 * station d'origine meme si le compte est renomme plus tard.
+	 *
+	 * @param bool $modif  FALSE = creation (cree_*), TRUE = modification (modif_*).
+	 * @return array  colonnes a fusionner dans le tableau d'insertion / de mise a jour.
+	 */
+	function sigco_traceur($modif = FALSE)
+	{
+		$compte = isset($_SESSION['account']) && is_array($_SESSION['account']) ? $_SESSION['account'] : array();
+		$id     = isset($compte['id']) ? (string) $compte['id'] : '';
+		$nom    = trim((isset($compte['nom']) ? $compte['nom'] : '').' '.(isset($compte['prenom']) ? $compte['prenom'] : ''));
+		if ($nom === '')
+		{
+			$nom = isset($compte['code']) ? (string) $compte['code'] : '';
+		}
+		$entreprise = isset($compte['institution']) ? (string) $compte['institution'] : '';
+
+		// Ville du compte (station) : une seule lecture par requete HTTP.
+		static $villes = array();
+		if ($id !== '' && ! array_key_exists($id, $villes))
+		{
+			$CI =& get_instance();
+			$ligne = $CI->db->select('ville')->where('identreprise', $id)->limit(1)->get('entreprise')->row();
+			$villes[$id] = $ligne ? (string) $ligne->ville : '';
+		}
+		$ville = $id !== '' && isset($villes[$id]) ? $villes[$id] : '';
+
+		$maintenant = new DateTime('now', new DateTimeZone('America/Port-au-Prince'));
+		$horodatage = $maintenant->format('Y-m-d H:i:s');
+
+		if ($modif)
+		{
+			return array(
+				'modif_par_id'  => $id,
+				'modif_par_nom' => $nom,
+				'modif_le'      => $horodatage,
+			);
+		}
+
+		return array(
+			'cree_par_id'     => $id,
+			'cree_par_nom'    => $nom,
+			'cree_entreprise' => $entreprise,
+			'cree_ville'      => $ville,
+			'cree_le'         => $horodatage,
+		);
+	}
+}

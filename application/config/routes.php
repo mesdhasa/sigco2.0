@@ -67,6 +67,12 @@ $route['mot-de-passe-oublie'] 	= 'gestion_login/login/reset_mot_de_passe';
 $route['login_param/(:any)'] 	= 'gestion_login/login/$1';
 
 //EXPORT
+// Bloc 03
+$route['points-de-chargement'] 		= 'export/export/points_chargement';
+$route['ajouter-point-chargement'] 	= 'export/export/ajouter_point_chargement';
+$route['archives-awb'] 				= 'export/export/archives_awb';
+$route['detail-archive-awb/(:num)'] = 'export/export/detail_archive_awb/$1';
+$route['archiver-awb'] 				= 'export/export/archiver_awb';
 $route['manifeste'] 				= 'export/export';
 $route['manifeste_supp/(:any)'] 			= 'export/export/supprimer_manifeste/$1';
 $route['modifier_un_manifeste/(:any)'] 				= 'export/export/modifier_un_manifeste/$1';

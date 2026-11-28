@@ -248,7 +248,7 @@ font-size: 28px;
 <table>
 
 <tr><td class='td1 span_left7'>
-<span class='mes_p2 color size2'>PORT-AU-PRINCE</span><br/>
+<span class='mes_p2 color size2'>".(!empty($rs->point_of_loading) ? $rs->point_of_loading : 'PORT-AU-PRINCE')."</span><br/>
 <span ></span>
 </td>
 

@@ -558,6 +558,7 @@
 				$data_1=array(
 				'awb_number'	=> $addawbl,
 				'status'		=> '1');
+				$data_1 = array_merge($data_1, sigco_traceur()); // tracabilite creation (Bloc 03)
 				$this->db->insert('awbl', $data_1);
 
 				// Set Awbl to WareHouse
@@ -663,6 +664,7 @@
 					$data_1=array(
 					'awb_number'	=> $awb_bycomp,
 					'status'		=> '1');
+					$data_1 = array_merge($data_1, sigco_traceur()); // tracabilite creation (Bloc 03)
 					$this->db->insert('awbl', $data_1);
 	
 					// Set Awbl to WareHouse
@@ -891,6 +893,101 @@
 				where awbl.awb_number=? ";
 				$query = $this->db->query($sql, array($id));
 				return $query->result();
+				}
+
+				// ----------------------------------------------------------------
+				// Bloc 03 - Points de chargement (Point of Loading) dynamiques.
+				// ----------------------------------------------------------------
+				public function get_points_of_loading($actifs_seulement = TRUE)
+				{
+				if ($actifs_seulement)
+				{
+				$this->db->where('statut', 1);
+				}
+				$this->db->order_by('nom', 'ASC');
+				return $this->db->get('point_of_loading')->result();
+				}
+
+				public function point_actif($code)
+				{
+				$ligne = $this->db->where('code', (string) $code)->where('statut', 1)
+					->limit(1)->get('point_of_loading')->row();
+				return $ligne ? $ligne : NULL;
+				}
+
+				public function add_point_of_loading($data)
+				{
+				return $this->db->insert('point_of_loading', $data);
+				}
+
+				public function compter_points_of_loading()
+				{
+				return (int) $this->db->count_all('point_of_loading');
+				}
+
+				public function get_points_of_loading_page($limit, $offset)
+				{
+				$this->db->order_by('nom', 'ASC');
+				return $this->db->get('point_of_loading', (int) $limit, (int) $offset)->result();
+				}
+
+				// ----------------------------------------------------------------
+				// Bloc 03 - Zone d'archives des numeros d'AWB.
+				// ----------------------------------------------------------------
+				public function get_un_awbl_par_id($id)
+				{
+				return $this->db->where('id_awbl', (int) $id)->limit(1)->get('awbl')->row();
+				}
+
+				/**
+				 * Archive une ligne awbl vers awbl_archive puis libere le numero
+				 * (suppression de la ligne active), le tout dans une transaction.
+				 * @return bool  TRUE si l'archivage a reussi.
+				 */
+				public function archiver_awbl($id, $archiveur, $motif = '')
+				{
+				$awbl = $this->get_un_awbl_par_id($id);
+				if ( ! $awbl)
+				{
+				return FALSE;
+				}
+				$ligne = (array) $awbl;
+				unset($ligne['id_awbl']); // id_archive est propre a la table d'archives
+				$ligne['archive_par_id']  = isset($archiveur['id']) ? $archiveur['id'] : '';
+				$ligne['archive_par_nom'] = isset($archiveur['nom']) ? $archiveur['nom'] : '';
+				$ligne['archive_le']      = isset($archiveur['le']) ? $archiveur['le'] : date('Y-m-d H:i:s');
+				$ligne['motif']           = (string) $motif;
+
+				$this->db->trans_start();
+				$this->db->insert('awbl_archive', $ligne);
+				$this->db->where('id_awbl', (int) $id)->delete('awbl');
+				$this->db->trans_complete();
+
+				return $this->db->trans_status();
+				}
+
+				public function compter_awbl_archive($recherche = '')
+				{
+				if ($recherche !== '')
+				{
+				$this->db->like('awb_number', $recherche);
+				}
+				return (int) $this->db->count_all_results('awbl_archive');
+				}
+
+				public function get_awbl_archive_page($recherche, $limit, $offset)
+				{
+				if ($recherche !== '')
+				{
+				$this->db->like('awb_number', $recherche);
+				}
+				$this->db->order_by('archive_le', 'DESC')->order_by('id_archive', 'DESC');
+				return $this->db->get('awbl_archive', (int) $limit, (int) $offset)->result();
+				}
+
+				public function get_un_awbl_archive($id)
+				{
+				return $this->db->where('id_archive', (int) $id)->limit(1)->get('awbl_archive')->row();
 				}
 			}
 

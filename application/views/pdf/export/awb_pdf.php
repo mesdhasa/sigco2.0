@@ -83,6 +83,15 @@ $consignee  = $name."<br>".$adresse."<br>".$ville."<br>".$email."<br>".$telephon
 
 $carriers_agent  = $name."<br>".$adresse."<br>".$ville;
 
+/* Createur de l'AWB (Bloc 03 - tracabilite sur le document imprime) */
+$cree_nom     = isset($data->cree_par_nom) ? trim((string) $data->cree_par_nom) : '';
+$cree_date    = (isset($data->cree_le) && $data->cree_le) ? date('d/m/Y', strtotime($data->cree_le)) : '';
+$cree_station = trim((isset($data->cree_entreprise) ? (string) $data->cree_entreprise : '').' '.(isset($data->cree_ville) ? (string) $data->cree_ville : ''));
+$createur_awb = '';
+if ($cree_nom !== '') { $createur_awb = htmlspecialchars($cree_nom, ENT_QUOTES, 'UTF-8'); }
+if ($cree_date !== '') { $createur_awb .= ($createur_awb !== '' ? ' - ' : '').$cree_date; }
+if ($cree_station !== '') { $createur_awb .= '<br>'.htmlspecialchars($cree_station, ENT_QUOTES, 'UTF-8'); }
+
 /*------------------------*/
 $awbl1=$data->awb_number;
 $awbl = explode("-",$awbl1);
@@ -724,7 +733,15 @@ font-size:13px;
 text-align: right;
 }
 
-
+.cree_par_awb{
+  position: absolute;
+  top: 905px;
+  left: 470px;
+  width: 265px;
+  font-size: 7pt;
+  text-align: center;
+  color: #000;
+}
 
 </style>";
 
@@ -772,6 +789,10 @@ $content = "
 
   <div class=\"carriers_agent\">
   ".$carriers_agent."
+  </div>
+
+  <div class=\"cree_par_awb\">
+  ".$createur_awb."
   </div>
 
   <div class=\"account_information\">
