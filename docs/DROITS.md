@@ -66,3 +66,13 @@ Le groupe spécial `001A` (Administration) reçoit tous les droits sans ligne en
 ## Méthodes sans droit particulier
 
 Session seule : tableau de bord (`Home`), changement de son mot de passe. Publiques : connexion, déconnexion, « mot de passe oublié ». Tâches planifiées (ligne de commande) : `Anniversaire`, `Outils`.
+
+## Nouveaux droits — Bloc 03 (à valider par l'IT Manager)
+
+Accordés par défaut aux groupes **Admin** et **Administrateur** uniquement (fonctions d'administration). Modifiables dans l'éditeur de groupe.
+
+| Droit | Fonction | Actions protégées |
+|---|---|---|
+| a40 | Gérer les points de chargement (villes de départ) | `Export::points_chargement`, `Export::ajouter_point_chargement` |
+| a41 | Archives AWB (archiver un numéro, consulter les archives) | `Export::archives_awb`, `Export::detail_archive_awb`, `Export::archiver_awb` |
+| a42 | Journal de traçabilité (page d'audit des documents) | `Audit::index` |
