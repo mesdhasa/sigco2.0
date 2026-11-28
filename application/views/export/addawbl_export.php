@@ -668,6 +668,19 @@ if ($rs->gross_weight > round($totalvolum)){
           ?>
 
           <input type="hidden" name="entered_by" id="entered_by" value="<?php echo $_SESSION['account']['prenom']." ".$_SESSION['account']['nom']?>" />
+          <?php // Tracabilite (Bloc 03) : createur / dernier modificateur de cet AWB
+          if (!empty($data->cree_par_nom) || !empty($data->modif_par_nom)) { ?>
+          <div class="alert alert-info" style="padding:6px 10px;margin:6px 0;font-size:12px">
+            <?php if (!empty($data->cree_par_nom)) { ?>
+            <i class="fa fa-user"></i> Cr&eacute;&eacute; par <strong><?php echo e($data->cree_par_nom); ?></strong>
+            <?php echo !empty($data->cree_le) ? ' le '.e(sigco_date($data->cree_le)) : ''; ?>
+            <?php $st = trim((string)$data->cree_entreprise.' '.(string)$data->cree_ville); echo $st !== '' ? ' &ndash; '.e($st) : ''; ?>
+            <?php } ?>
+            <?php if (!empty($data->modif_par_nom)) { ?>
+            &nbsp;|&nbsp; <i class="fa fa-pencil"></i> Modifi&eacute; par <strong><?php echo e($data->modif_par_nom); ?></strong><?php echo !empty($data->modif_le) ? ' le '.e(sigco_date($data->modif_le)) : ''; ?>
+            <?php } ?>
+          </div>
+          <?php } ?>
           <button type="submit" id="btn_add_awb" class="btn btn-sm btn-primary">
           <i class="ace-icon fa fa-save"></i>
           Save

@@ -1058,6 +1058,8 @@ redirect('login');
 $_POST['date1']= "";
 $_POST['date2']= "";
 $data['lessegments']= 	array();
+$data['compagnie']	=	$this->Parser->get_compagnie();
+$data['compagnie_choisie']	=	'';
 $data['act']			=	$this->uri->segment(3);
 $data['y']				=	$this->uri->segment(4);
 
@@ -1069,10 +1071,13 @@ if($_SESSION['account']['code'] == ""){
 redirect('login');
 }
 $data['lessegments']= 	array();
+$data['compagnie']	=	$this->Parser->get_compagnie();
+$compagnie	=	$this->input->post('compagnie');
+$data['compagnie_choisie']	=	$compagnie;
 $data['act']	=	$this->uri->segment(3);
 $data['y']		=	$this->uri->segment(4);
 if(!empty($_POST['date1']) && !empty($_POST['date2'])){
-$data['lessegments']= 	$this->Parser->recherche_informatics_fees(chaineVersDate($_POST['date1']),chaineVersDate($_POST['date2']));
+$data['lessegments']= 	$this->Parser->recherche_informatics_fees(chaineVersDate($_POST['date1']),chaineVersDate($_POST['date2']),$compagnie);
 }
 
 $this->load->view('informatics_fees',$data);
@@ -1085,7 +1090,7 @@ redirect('login');
 $this->load->library('Pdf');
 $date1 =	$this->uri->segment(3);
 $date2 =	$this->uri->segment(4);
-$custum =	$this->uri->segment(5);
+$custum =	$this->uri->segment(5); // filtre transporteur (Bloc 03), 0 = tous
 $data['lessegments']= 	$this->Parser->recherche_informatics_fees($date1,$date2,$custum);
 $this->load->view('pdf/informatics_fees_pdf',$data);
 }
@@ -1097,6 +1102,8 @@ redirect('login');
 $_POST['date1']= "";
 $_POST['date2']= "";
 $data['lessegments']= 	array();
+$data['compagnie']	=	$this->Parser->get_compagnie();
+$data['compagnie_choisie']	=	'';
 $data['act']			=	$this->uri->segment(3);
 $data['y']				=	$this->uri->segment(4);
 
@@ -1108,10 +1115,13 @@ if($_SESSION['account']['code'] == ""){
 redirect('login');
 }
 $data['lessegments']= 	array();
+$data['compagnie']	=	$this->Parser->get_compagnie();
+$compagnie	=	$this->input->post('compagnie');
+$data['compagnie_choisie']	=	$compagnie;
 $data['act']	=	$this->uri->segment(3);
 $data['y']		=	$this->uri->segment(4);
 if(!empty($_POST['date1']) && !empty($_POST['date2']) ){
-$data['lessegments']= 	$this->Parser->recherche_import_fees(chaineVersDate($_POST['date1']),chaineVersDate($_POST['date2']));
+$data['lessegments']= 	$this->Parser->recherche_import_fees(chaineVersDate($_POST['date1']),chaineVersDate($_POST['date2']),$compagnie);
 $this->session->no = chaineVersDate($_POST['date1']);
 $this->session->no = chaineVersDate($_POST['date2']);
 }
@@ -1127,8 +1137,9 @@ $this->load->library('Pdf');
 $currency	= $this->uri->segment(3);
 $date1 =	$this->uri->segment(4);
 $date2 =	$this->uri->segment(5);
+$compagnie =	$this->uri->segment(6); // filtre transporteur (Bloc 03), 0 = tous
 $data['compagnie']	= 	$this->Parser->get_compagnie();
-$data['lessegments']= 	$this->Parser->recherche_import_fees2($date1,$date2,$currency);
+$data['lessegments']= 	$this->Parser->recherche_import_fees2($date1,$date2,$currency,$compagnie);
 
 $this->load->view('pdf/import_fees_pdf',$data);
 }

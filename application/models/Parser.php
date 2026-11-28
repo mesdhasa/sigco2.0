@@ -605,10 +605,10 @@ class Parser extends CI_Model
 		$query = $this->db->query($sql, $bind);
 		return $query->result();
 	}
-	public function recherche_informatics_fees($date1, $date2)
+	public function recherche_informatics_fees($date1, $date2, $compagnie = '')
 	{
 		// Parametres valides (AUDIT-001)
-		$date1 = sigco_date($date1); $date2 = sigco_date($date2);
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2); $comp = sigco_id($compagnie);
 		$sql = "SELECT hc.awb, nr.num,sg.Date_of_arrival,sg.idcompagnie,sg.Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
 					 FROM norapport as nr
 					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
@@ -616,16 +616,18 @@ class Parser extends CI_Model
 					 INNER JOIN segment as sg ON (sg.id = b.segmentid)
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
 					 where nr.daterapport BETWEEN ? AND ? and b.shot = 0 and sg.Voyage_number and hc.description='Redevance informatiques' ";
-		$query = $this->db->query($sql, array($date1, $date2));
+		$bind = array($date1, $date2);
+		if ($comp > 0) { $sql .= " AND cp.idcompagnie = ?"; $bind[] = $comp; } // filtre transporteur (Bloc 03)
+		$query = $this->db->query($sql, $bind);
 		return $query->result();
 	}
 
-	public function recherche_import_fees($date1, $date2)
+	public function recherche_import_fees($date1, $date2, $compagnie = '')
 	{
 
 		// Parametres valides (AUDIT-001)
 
-		$date1 = sigco_date($date1); $date2 = sigco_date($date2);
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2); $comp = sigco_id($compagnie);
 		$sql = "SELECT hc.awb, nr.num,sg.Date_of_arrival,sg.idcompagnie,sg.Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
 					 FROM norapport as nr
 					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
@@ -633,7 +635,9 @@ class Parser extends CI_Model
 					 INNER JOIN segment as sg ON (sg.id = b.segmentid)
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
 					 where nr.daterapport BETWEEN ? AND ? and b.shot = 0 and hc.description='Airport Fees'";
-		$query = $this->db->query($sql, array($date1, $date2));
+		$bind = array($date1, $date2);
+		if ($comp > 0) { $sql .= " AND cp.idcompagnie = ?"; $bind[] = $comp; } // filtre transporteur (Bloc 03)
+		$query = $this->db->query($sql, $bind);
 		return $query->result();
 	}
 	public function recherche_freight($date1, $date2)
@@ -648,10 +652,10 @@ class Parser extends CI_Model
 		$query = $this->db->query($sql, array($date1, $date2));
 		return $query->result();
 	}
-	public function recherche_import_fees2($date1, $date2, $currency)
+	public function recherche_import_fees2($date1, $date2, $currency, $compagnie = '')
 	{
 		// Parametres valides (AUDIT-001)
-		$date1 = sigco_date($date1); $date2 = sigco_date($date2); $currency = sigco_devise($currency);
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2); $currency = sigco_devise($currency); $comp = sigco_id($compagnie);
 		$sql = "SELECT hc.awb, nr.num,sg.Date_of_arrival,sg.idcompagnie,sg.Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
 					 FROM norapport as nr
 					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
@@ -659,7 +663,9 @@ class Parser extends CI_Model
 					 INNER JOIN segment as sg ON (sg.id = b.segmentid)
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
 					 where nr.daterapport BETWEEN ? AND ? and b.shot = 0 and hc.description='Airport Fees' and hc.monnaie=? ";
-		$query = $this->db->query($sql, array($date1, $date2, $currency));
+		$bind = array($date1, $date2, $currency);
+		if ($comp > 0) { $sql .= " AND cp.idcompagnie = ?"; $bind[] = $comp; } // filtre transporteur (Bloc 03)
+		$query = $this->db->query($sql, $bind);
 		return $query->result();
 	}
 	public function recherche_freight2($date1, $date2, $currency)
