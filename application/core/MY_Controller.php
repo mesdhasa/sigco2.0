@@ -117,6 +117,15 @@ class MY_Controller extends CI_Controller
 			$this->_stop(405, 'Methode non autorisee : cette action doit etre confirmee depuis l\'application.');
 		}
 
+		// Toute action d'ecriture ($post_requis) rend perimes les calculs en cache (tableau de bord,
+		// factures impayees). Les recherches en POST n'invalident rien. Invalidation avant l'action
+		// et a la fin de la requete (l'action peut se terminer par redirect()).
+		if (in_array($cle, $this->post_requis, TRUE) && get_class($this) !== 'Login')
+		{
+			sigco_cache_invalider();
+			register_shutdown_function('sigco_cache_invalider');
+		}
+
 		return call_user_func_array(array($this, $reelle), $params);
 	}
 

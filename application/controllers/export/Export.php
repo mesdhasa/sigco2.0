@@ -52,16 +52,22 @@ class Export extends MY_Controller {
 		'delete_other_charges' => 'a10',
 		'deleteAwb' => 'a10',
 		'awb_pdf' => 'a10',
-		'awb_pdf2' => 'a10',
 		'tag4x6' => 'a10',
 		'tag4x4' => 'a10',
 		'edit_awbl_export' => 'a10',
 		'ajax_prepaidcollect' => 'a10',
 		'void_awb' => 'a36',
+		// Bloc 03
+		'points_chargement' => 'a40',
+		'ajouter_point_chargement' => 'a40',
+		'archives_awb' => 'a41',
+		'detail_archive_awb' => 'a41',
+		'archiver_awb' => 'a41',
 	);
 
 	protected $post_requis = array(
 		'ajouter_reservation', 'ajouter_warehouse', 'modifier_ajouter_warehouse', 'edit_warehouse', 'add_manifeste', 'edit_manifeste', 'edit_reservation', 'ajax_prepaidcollect', 'supprimer_manifeste', 'delete_warehouse_colis', 'supprimer_reservation', 'supprimer_warehouse', 'add_awb_manifest', 'fermer_vol', 'ouvrir_vol', 'remove_awb_manifest', 'ajouter_pcs', 'addawbl_export', 'void_awb', 'add_other_charges', 'delete_other_charges', 'deleteAwb',
+		'ajouter_point_chargement', 'archiver_awb',
 	);
 
 
@@ -314,6 +320,7 @@ $data2[]=array(
 // $is_true=false;
 $is_true=false;
 // $is_true=$this->Parser->set_addawbl_exp($insert);
+$data = array_merge($data, sigco_traceur()); // tracabilite creation (Bloc 03)
 $is_true=$this->Parser_export->add_warehouse($data);
 // $is_true=$this->Parser_export->add_awbl($data_awb);
 if (empty($data2)) {
@@ -360,6 +367,7 @@ $data = array(
 
 
 $is_true=false;
+$data = array_merge($data, sigco_traceur(TRUE)); // tracabilite modification (Bloc 03)
 $is_true=$this->Parser_export->update_warehouse($id,$data);
 if($is_true){
 redirect("modifier_warehouse/".$_POST['warehouse']);
@@ -410,6 +418,7 @@ $data['act']		='e';
 $data['y']			='ajouter';
 $data['page'] = 'export/manifeste';
 $data['compagnie']	= 	$this->Parser_export->get_compagnie();
+$data['points']		=	$this->Parser_export->get_points_of_loading();
 $this->load->view('template', $data);
 }
 public function add_manifeste()
@@ -423,6 +432,9 @@ if(empty($_POST['compagnie'])){
 $this->session->set_flashdata('sms_add_manifeste2','erreur insertion,choisissez une compagnie ');
 redirect('creer-un-manifeste');
 }else {
+// Point of Loading (Bloc 03) : valeur choisie, validee contre la table de reference.
+$point = $this->Parser_export->point_actif($this->input->post('point_of_loading'));
+$nom_point = $point ? $point->nom : 'PORT-AU-PRINCE';
 $data = array(
 
 'idcompagnie'	=> 	$compagnie,
@@ -430,9 +442,11 @@ $data = array(
 'flight' 		=> $_POST['flight'],
 'date' 			=> chaineversdate($_POST['dateflt']),
 'country_loading' 			=> "HTPAP",
+'point_of_loading'		=> $nom_point,
 'country_unloading' 			=> strtoupper($_POST['country_unloading']),
 'type_manifeste' 			=>'Export',
 );
+$data = array_merge($data, sigco_traceur()); // tracabilite creation
 
 $is_true=false;
 $is_true=$this->Parser_export->add_manifeste($data);
@@ -453,6 +467,7 @@ redirect('login');
 }
 $id = $_POST['id'];
 $compagnie	=	$this->input->post('compagnie');
+$point = $this->Parser_export->point_actif($this->input->post('point_of_loading'));
 $data = array(
 'idcompagnie'	=> 	$compagnie,
 'air_craft' 		=> $_POST['air_craft'],
@@ -462,6 +477,8 @@ $data = array(
 'country_unloading' 			=> strtoupper($_POST['country_unloading']),
 
 );
+if ($point) { $data['point_of_loading'] = $point->nom; }
+$data = array_merge($data, sigco_traceur(TRUE)); // tracabilite modification
 
 $this->Parser_export->set_a_manifeste($id,$data);
 $this->session->set_flashdata('sms_add_manifeste','Modifier avec success.');
@@ -586,6 +603,7 @@ $id 	= $this->uri->segment(2);
 $data['act']		='e';
 $data['y']			='recherche';
 $data['compagnie']	= 	$this->Parser_export->get_compagnie();
+$data['points']		=	$this->Parser_export->get_points_of_loading();
 $data['lemanifeste'] 	= $this->Parser_export->get_lemanifeste($id);
 $data['page'] = 'export/manifeste_edit';
 $this->load->view('template', $data);
@@ -801,8 +819,12 @@ $data['leswarehouse']= 	array();
 $data['act']		='e';
 $data['y']			='warehouse';
 $data['compagnie']	= 	$this->Parser->get_compagnie();
-if(!empty($_POST['custum'])){
-$data['leswarehouse']= 	$this->Parser_export->recherche_warehouse($_POST['custum']);
+// Pagination serveur (une recherche large renvoyait des milliers de lignes) ; valeur gardee en session pour les liens de pages
+if(!empty($_POST['custum'])){ $this->session->set_userdata('sigco_rech_warehouse', (string) $_POST['custum']); }
+if(!empty($_POST['custum']) || ($this->session->userdata('sigco_rech_warehouse') !== NULL && ($this->input->get('page') !== NULL || $this->input->get('par_page') !== NULL))){
+$_POST['custum'] = $this->session->userdata('sigco_rech_warehouse');
+$data['sigco_pag'] = sigco_pagination($this->Parser_export->compter_recherche_warehouse($_POST['custum']));
+$data['leswarehouse']= 	$this->Parser_export->recherche_warehouse($_POST['custum'], $data['sigco_pag']['par_page'], $data['sigco_pag']['offset']);
 $data['antrepot2'] 	= $this->Parser_export->get_antrepot_pcs($_POST['custum']);
 // 							echo "<pre>";
 // print_r($data['leswarehouse']['id_warehouse']);
@@ -1000,9 +1022,12 @@ $data['nowh']= 	$this->uri->segment(2);
 $data['act']		='e';
 $data['y']			='airway';
 $data['compagnie']	= 	$this->Parser_export->get_compagnie();
-if(!empty($_POST['custum'])){
-//$data['leswarehouse']= 	$this->Parser_export->recherche_warehouse($_POST['custum']);
-$data['leswarehouse']= 	$this->Parser_export->recherche_awbl_export($_POST['custum']);
+// Pagination serveur (une recherche large renvoyait des milliers de lignes) ; valeur gardee en session pour les liens de pages
+if(!empty($_POST['custum'])){ $this->session->set_userdata('sigco_rech_awb_export', (string) $_POST['custum']); }
+if(!empty($_POST['custum']) || ($this->session->userdata('sigco_rech_awb_export') !== NULL && ($this->input->get('page') !== NULL || $this->input->get('par_page') !== NULL))){
+$_POST['custum'] = $this->session->userdata('sigco_rech_awb_export');
+$data['sigco_pag'] = sigco_pagination($this->Parser_export->compter_recherche_awbl_export($_POST['custum']));
+$data['leswarehouse']= 	$this->Parser_export->recherche_awbl_export($_POST['custum'], $data['sigco_pag']['par_page'], $data['sigco_pag']['offset']);
 $data['antrepot2'] 	= $this->Parser_export->get_antrepot_pcs($_POST['custum']);
 $this->session->no = $_POST['custum'];
 }else{
@@ -1023,9 +1048,12 @@ $data['nowh']= 	$this->uri->segment(2);
 $data['act']		='e';
 $data['y']			='airway';
 $data['compagnie']	= 	$this->Parser_export->get_compagnie();
-if(!empty($_POST['custum'])){
-//$data['leswarehouse']= 	$this->Parser_export->recherche_warehouse($_POST['custum']);
-$data['leswarehouse']= 	$this->Parser_export->recherche_awbl_export($_POST['custum']);
+// Pagination serveur (une recherche large renvoyait des milliers de lignes) ; valeur gardee en session pour les liens de pages
+if(!empty($_POST['custum'])){ $this->session->set_userdata('sigco_rech_awb_export', (string) $_POST['custum']); }
+if(!empty($_POST['custum']) || ($this->session->userdata('sigco_rech_awb_export') !== NULL && ($this->input->get('page') !== NULL || $this->input->get('par_page') !== NULL))){
+$_POST['custum'] = $this->session->userdata('sigco_rech_awb_export');
+$data['sigco_pag'] = sigco_pagination($this->Parser_export->compter_recherche_awbl_export($_POST['custum']));
+$data['leswarehouse']= 	$this->Parser_export->recherche_awbl_export($_POST['custum'], $data['sigco_pag']['par_page'], $data['sigco_pag']['offset']);
 $data['antrepot2'] 	= $this->Parser_export->get_antrepot_pcs($_POST['custum']);
 $this->session->no = $_POST['custum'];
 }else{
@@ -1204,6 +1232,7 @@ $insert['typeawbl'] 		 = 	'export';
 //    echo "</pre>";
 
 
+$data = array_merge($data, sigco_traceur(TRUE)); // tracabilite modification (Bloc 03)
 $this->Parser_export->update_awbl($id,$data);
 $this->Parser_export->update_awbl2($_POST['awb_number'],$insert);
 // $this->Parser_export->update_Other_charges_due_agent($_POST['awb_number'],$datapmt1,$rws22->idtx);
@@ -1380,6 +1409,100 @@ $reponse = $this->Parser_export->update_awb_warehouse($id,$data2);
 $this->session->set_flashdata('sms2','Votre AWB est supprimé avec succès.');
 
 redirect('Airway_Bill');
+}
+
+
+// ============================================================
+// Bloc 03 - Points de chargement dynamiques (gestion).
+// ============================================================
+public function points_chargement()
+{
+if($_SESSION['account']['code'] == ""){
+redirect('login');
+}
+$pagination = sigco_pagination($this->Parser_export->compter_points_of_loading());
+$data['sigco_pag']	= $pagination;
+$data['points']		= $this->Parser_export->get_points_of_loading_page($pagination['par_page'], $pagination['offset']);
+$data['act']		= 'e';
+$data['y']			= 'points';
+$data['page']		= 'export/points_chargement';
+$this->load->view('template', $data);
+}
+
+public function ajouter_point_chargement()
+{
+if($_SESSION['account']['code'] == ""){
+redirect('login');
+}
+$code = strtoupper(trim((string) $this->input->post('code')));
+$nom  = strtoupper(trim((string) $this->input->post('nom')));
+if($code === '' || $nom === ''){
+$this->session->set_flashdata('sms_point','Le code et la ville sont obligatoires.');
+redirect('points-de-chargement');
+}
+if($this->Parser_export->point_actif($code)){
+$this->session->set_flashdata('sms_point','Ce code de ville existe deja.');
+redirect('points-de-chargement');
+}
+$this->Parser_export->add_point_of_loading(array('code'=>substr($code,0,10),'nom'=>substr($nom,0,100),'statut'=>1));
+$this->session->set_flashdata('sms_point','Ville de depart ajoutee avec succes.');
+redirect('points-de-chargement');
+}
+
+// ============================================================
+// Bloc 03 - Zone d'archives des numeros d'AWB.
+// ============================================================
+public function archives_awb()
+{
+if($_SESSION['account']['code'] == ""){
+redirect('login');
+}
+$recherche = trim((string) $this->input->get('q'));
+$pagination = sigco_pagination($this->Parser_export->compter_awbl_archive($recherche));
+$data['sigco_pag']	= $pagination;
+$data['recherche']	= $recherche;
+$data['archives']	= $this->Parser_export->get_awbl_archive_page($recherche, $pagination['par_page'], $pagination['offset']);
+$data['act']		= 'e';
+$data['y']			= 'archives';
+$data['page']		= 'export/archives_awb';
+$this->load->view('template', $data);
+}
+
+public function detail_archive_awb($id = 0)
+{
+if($_SESSION['account']['code'] == ""){
+redirect('login');
+}
+$data['archive']	= $this->Parser_export->get_un_awbl_archive($id);
+if( ! $data['archive']){
+show_404();
+return;
+}
+$data['act']		= 'e';
+$data['y']			= 'archives';
+$data['page']		= 'export/detail_archive_awb';
+$this->load->view('template', $data);
+}
+
+public function archiver_awb($id_url = 0)
+{
+if($_SESSION['account']['code'] == ""){
+redirect('login');
+}
+// id depuis l'URL (bouton confirmation_lien -> sigcoPost) ou depuis le POST.
+$id    = ((int) $id_url > 0) ? (int) $id_url : (int) $this->input->post('id_awbl');
+$motif = substr(trim((string) $this->input->post('motif')), 0, 200);
+if($id <= 0){
+show_404();
+return;
+}
+$trace = sigco_traceur();
+$archiveur = array('id'=>$trace['cree_par_id'], 'nom'=>$trace['cree_par_nom'], 'le'=>$trace['cree_le']);
+$ok = $this->Parser_export->archiver_awbl($id, $archiveur, $motif);
+$this->session->set_flashdata('sms2', $ok
+	? 'AWB archive avec succes : le numero est de nouveau disponible.'
+	: 'Echec de l\'archivage : AWB introuvable ou erreur.');
+redirect('archives-awb');
 }
 
 

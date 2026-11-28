@@ -23,8 +23,8 @@ ini_set('memory_limit', '1024M');
 
 		<!-- bootstrap & fontawesome -->
     <link rel="stylesheet" href="<?php echo base_url()?>assets/css/bootstrap-3.4.1.min.css" />
-    <!-- <link rel="stylesheet" href="<?php echo base_url()?>assets/my/awb.js" /> -->
-		<!-- <link rel="stylesheet" href="<?php echo base_url()?>assets/my/nocache.js" /> -->
+    <!-- <link rel="stylesheet" href="<?php echo sigco_asset('assets/my/awb.js')?>" /> -->
+		<!-- <link rel="stylesheet" href="<?php echo sigco_asset('assets/my/nocache.js')?>" /> -->
 		<link rel="stylesheet" href="<?php echo base_url()?>assets/font-awesome/4.7.0/css/font-awesome.min.css" />
 
 		<!-- page specific plugin styles -->
@@ -35,7 +35,7 @@ ini_set('memory_limit', '1024M');
 
 		<!-- ace styles -->
 		<link rel="stylesheet" href="<?php echo base_url()?>assets/css/ace.min.css" class="ace-main-stylesheet" id="main-ace-style" />
-		<link rel="stylesheet" href="<?php echo base_url()?>assets/css/mycss.css" class="ace-main-stylesheet" id="main-ace-style" />
+		<link rel="stylesheet" href="<?php echo sigco_asset('assets/css/mycss.css')?>" class="ace-main-stylesheet" id="main-ace-style" />
 
 		<!--[if lte IE 9]>
 			<link rel="stylesheet" href="assets/css/ace-part2.min.css" class="ace-main-stylesheet" />
@@ -63,6 +63,7 @@ ini_set('memory_limit', '1024M');
 <link rel="stylesheet" href="<?php echo base_url()?>assets/mytools/fancybox/source/helpers/jquery.fancybox-buttons.css?v=1.0.5" type="text/css" media="screen" />
 <link rel="stylesheet" href="<?php echo base_url()?>assets/mytools/fancybox/source/helpers/jquery.fancybox-thumbs.css?v=1.0.7" type="text/css" media="screen" />
 
+			<style id="sigco-pre-pagination">/* Grands tableaux : seules les 100 premieres lignes sont mises en page pendant le chargement (sigco-ui.js gere ensuite la pagination) */.page-content table:not([data-sigco-pagination="serveur"])>tbody>tr:nth-child(n+101){display:none}</style>
 	</head>
 
 	<body class="no-skin">

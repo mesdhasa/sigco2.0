@@ -62,6 +62,18 @@ CARGO MANIFEST
                      </div>
                    </div>
                 <div class="form-group">
+                      <label class="control-label col-sm-3" for="point_of_loading"><strong>Point of Loading:</strong></label>
+                      <div class="col-sm-9">
+                        <?php $pol_actuel = isset($rs->point_of_loading) ? strtoupper((string) $rs->point_of_loading) : ''; ?>
+                        <select class="form-control" id="point_of_loading" name="point_of_loading">
+                        <?php foreach((isset($points) ? $points : array()) as $pt){
+                            $sel = (strtoupper($pt->nom)===$pol_actuel || ($pol_actuel==='' && strtoupper($pt->code)==='PAP')) ? ' selected' : ''; ?>
+                        <option value="<?php echo e($pt->code)?>"<?php echo $sel?>><?php echo e($pt->code.' - '.$pt->nom)?></option>
+                        <?php } ?>
+                        </select>
+                      </div>
+                    </div>
+                <div class="form-group">
                       <label class="control-label col-sm-3" for="country_loading"><strong>Country Loading:</strong></label>
                       <div class="col-sm-9">
                         <input type="text" class="form-control" id="country_loading" placeholder="PAP" name="country_loading" value="PAP"disabled>

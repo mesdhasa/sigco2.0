@@ -462,27 +462,49 @@
 				$query = $this->db->get('reservation');
 				return $query->result();
 				}
-				public function recherche_warehouse($custum)
+				// Pagination serveur : $limit/$offset optionnels (NULL = toutes les lignes, comme avant)
+				private function _filtre_recherche_warehouse($custum)
 				{
-				$this->db->select('');
 				$this->db->like('no_warehouse', $custum);
 				$this->db->or_like('nom_ch', $custum);
 				// $this->db->join('awbl', 'awbl.awb_number = warehouse.no_awbl','inner');
 				$this->db->or_like('prenom_ch', $custum);
 				$this->db->or_like('nom_p', $custum);
+				}
+				public function compter_recherche_warehouse($custum)
+				{
+				$this->_filtre_recherche_warehouse($custum);
+				return $this->db->count_all_results('warehouse');
+				}
+				public function recherche_warehouse($custum, $limit = NULL, $offset = 0)
+				{
+				$this->db->select('');
+				$this->_filtre_recherche_warehouse($custum);
 				$this->db->order_by("ladate", "DESC");
+				$this->db->order_by("id_warehouse", "DESC");
+				if ($limit !== NULL) { $this->db->limit((int) $limit, (int) $offset); }
 				$query = $this->db->get('warehouse');
 				return $query->result();
 				}
-				public function recherche_awbl_export($custum)
+				private function _filtre_recherche_awbl_export($custum)
 				{
-				$this->db->select('');
 				$this->db->like('awb_number', $custum);
 				$this->db->or_like('account_number_shipper', $custum);
 				$this->db->or_like('name_shipper', $custum);
 				$this->db->or_like('account_number_consignee', $custum);
 				$this->db->or_like('name_consignee', $custum);
 				$this->db->join('warehouse', 'warehouse.no_awbl= awbl.awb_number','inner');
+				}
+				public function compter_recherche_awbl_export($custum)
+				{
+				$this->_filtre_recherche_awbl_export($custum);
+				return $this->db->count_all_results('awbl');
+				}
+				public function recherche_awbl_export($custum, $limit = NULL, $offset = 0)
+				{
+				$this->db->select('');
+				$this->_filtre_recherche_awbl_export($custum);
+				if ($limit !== NULL) { $this->db->order_by('awbl.id_awbl', 'ASC'); $this->db->limit((int) $limit, (int) $offset); }
 
 				$query = $this->db->get('awbl');
 				return $query->result();
@@ -490,6 +512,8 @@
 
 				public function recherche_vol_date($date1,$date2)
 				{
+				// Parametres valides (AUDIT-001)
+				$date1 = sigco_date($date1); $date2 = sigco_date($date2);
 				$this->db->select('');
 				$this->db->join('compaganie', 'compaganie.idcompagnie = manifeste.idcompagnie','inner');
 				$where = "DATE(date) BETWEEN " . $this->db->escape($date1) . " AND " . $this->db->escape($date2);
@@ -534,6 +558,7 @@
 				$data_1=array(
 				'awb_number'	=> $addawbl,
 				'status'		=> '1');
+				$data_1 = array_merge($data_1, sigco_traceur()); // tracabilite creation (Bloc 03)
 				$this->db->insert('awbl', $data_1);
 
 				// Set Awbl to WareHouse
@@ -639,6 +664,7 @@
 					$data_1=array(
 					'awb_number'	=> $awb_bycomp,
 					'status'		=> '1');
+					$data_1 = array_merge($data_1, sigco_traceur()); // tracabilite creation (Bloc 03)
 					$this->db->insert('awbl', $data_1);
 	
 					// Set Awbl to WareHouse
@@ -867,6 +893,150 @@
 				where awbl.awb_number=? ";
 				$query = $this->db->query($sql, array($id));
 				return $query->result();
+				}
+
+				// ----------------------------------------------------------------
+				// Bloc 03 - Points de chargement (Point of Loading) dynamiques.
+				// ----------------------------------------------------------------
+				public function get_points_of_loading($actifs_seulement = TRUE)
+				{
+				if ($actifs_seulement)
+				{
+				$this->db->where('statut', 1);
+				}
+				$this->db->order_by('nom', 'ASC');
+				return $this->db->get('point_of_loading')->result();
+				}
+
+				public function point_actif($code)
+				{
+				$ligne = $this->db->where('code', (string) $code)->where('statut', 1)
+					->limit(1)->get('point_of_loading')->row();
+				return $ligne ? $ligne : NULL;
+				}
+
+				public function add_point_of_loading($data)
+				{
+				return $this->db->insert('point_of_loading', $data);
+				}
+
+				public function compter_points_of_loading()
+				{
+				return (int) $this->db->count_all('point_of_loading');
+				}
+
+				public function get_points_of_loading_page($limit, $offset)
+				{
+				$this->db->order_by('nom', 'ASC');
+				return $this->db->get('point_of_loading', (int) $limit, (int) $offset)->result();
+				}
+
+				// ----------------------------------------------------------------
+				// Bloc 03 - Zone d'archives des numeros d'AWB.
+				// ----------------------------------------------------------------
+				public function get_un_awbl_par_id($id)
+				{
+				return $this->db->where('id_awbl', (int) $id)->limit(1)->get('awbl')->row();
+				}
+
+				/**
+				 * Archive une ligne awbl vers awbl_archive puis libere le numero
+				 * (suppression de la ligne active), le tout dans une transaction.
+				 * @return bool  TRUE si l'archivage a reussi.
+				 */
+				public function archiver_awbl($id, $archiveur, $motif = '')
+				{
+				$awbl = $this->get_un_awbl_par_id($id);
+				if ( ! $awbl)
+				{
+				return FALSE;
+				}
+				$ligne = (array) $awbl;
+				unset($ligne['id_awbl']); // id_archive est propre a la table d'archives
+				$ligne['archive_par_id']  = isset($archiveur['id']) ? $archiveur['id'] : '';
+				$ligne['archive_par_nom'] = isset($archiveur['nom']) ? $archiveur['nom'] : '';
+				$ligne['archive_le']      = isset($archiveur['le']) ? $archiveur['le'] : date('Y-m-d H:i:s');
+				$ligne['motif']           = (string) $motif;
+
+				$this->db->trans_start();
+				$this->db->insert('awbl_archive', $ligne);
+				$this->db->where('id_awbl', (int) $id)->delete('awbl');
+				$this->db->trans_complete();
+
+				return $this->db->trans_status();
+				}
+
+				public function compter_awbl_archive($recherche = '')
+				{
+				if ($recherche !== '')
+				{
+				$this->db->like('awb_number', $recherche);
+				}
+				return (int) $this->db->count_all_results('awbl_archive');
+				}
+
+				public function get_awbl_archive_page($recherche, $limit, $offset)
+				{
+				if ($recherche !== '')
+				{
+				$this->db->like('awb_number', $recherche);
+				}
+				$this->db->order_by('archive_le', 'DESC')->order_by('id_archive', 'DESC');
+				return $this->db->get('awbl_archive', (int) $limit, (int) $offset)->result();
+				}
+
+				public function get_un_awbl_archive($id)
+				{
+				return $this->db->where('id_archive', (int) $id)->limit(1)->get('awbl_archive')->row();
+				}
+
+				// ----------------------------------------------------------------
+				// Bloc 03 - Journal de tracabilite (page d'audit).
+				// Types : 'awb' (awbl export), 'manifeste', 'warehouse'.
+				// ----------------------------------------------------------------
+				private function _audit_builder($type, $compagnie, $date1, $date2)
+				{
+				$comp = sigco_id($compagnie);
+				if ($type === 'manifeste')
+				{
+				$this->db->from('manifeste m')
+					->join('compaganie cp', 'cp.idcompagnie = m.idcompagnie', 'left');
+				$this->db->select("m.id_manifeste as id, m.flight as reference, cp.compagnie as transporteur, m.date as date_doc, m.cree_par_nom, m.cree_entreprise, m.cree_ville, m.cree_le, m.modif_par_nom, m.modif_le", FALSE);
+				if ($comp > 0) { $this->db->where('m.idcompagnie', $comp); }
+				if ($date1 !== '' && $date2 !== '') { $this->db->where('DATE(m.cree_le) >=', sigco_date($date1))->where('DATE(m.cree_le) <=', sigco_date($date2)); }
+				$this->db->order_by('m.cree_le IS NULL, m.cree_le DESC, m.id_manifeste DESC', '', FALSE);
+				}
+				elseif ($type === 'warehouse')
+				{
+				$this->db->from('warehouse w')
+					->join('compaganie cp', 'cp.idcompagnie = w.idcompagnie', 'left');
+				$this->db->select("w.id_warehouse as id, w.no_warehouse as reference, cp.compagnie as transporteur, w.ladate as date_doc, w.cree_par_nom, w.cree_entreprise, w.cree_ville, w.cree_le, w.modif_par_nom, w.modif_le", FALSE);
+				if ($comp > 0) { $this->db->where('w.idcompagnie', $comp); }
+				if ($date1 !== '' && $date2 !== '') { $this->db->where('DATE(w.cree_le) >=', sigco_date($date1))->where('DATE(w.cree_le) <=', sigco_date($date2)); }
+				$this->db->order_by('w.cree_le IS NULL, w.cree_le DESC, w.id_warehouse DESC', '', FALSE);
+				}
+				else // awb (awbl export)
+				{
+				$this->db->from('awbl a')
+					->join('manifeste m', 'm.id_manifeste = a.id_manifeste', 'left')
+					->join('compaganie cp', 'cp.idcompagnie = m.idcompagnie', 'left');
+				$this->db->select("a.id_awbl as id, a.awb_number as reference, cp.compagnie as transporteur, a.date_flight as date_doc, a.cree_par_nom, a.cree_entreprise, a.cree_ville, a.cree_le, a.modif_par_nom, a.modif_le", FALSE);
+				if ($comp > 0) { $this->db->where('m.idcompagnie', $comp); }
+				if ($date1 !== '' && $date2 !== '') { $this->db->where('DATE(a.cree_le) >=', sigco_date($date1))->where('DATE(a.cree_le) <=', sigco_date($date2)); }
+				$this->db->order_by('a.cree_le IS NULL, a.cree_le DESC, a.id_awbl DESC', '', FALSE);
+				}
+				}
+
+				public function compter_audit($type, $compagnie = '', $date1 = '', $date2 = '')
+				{
+				$this->_audit_builder($type, $compagnie, $date1, $date2);
+				return $this->db->count_all_results();
+				}
+
+				public function get_audit_page($type, $compagnie, $date1, $date2, $limit, $offset)
+				{
+				$this->_audit_builder($type, $compagnie, $date1, $date2);
+				return $this->db->get('', (int) $limit, (int) $offset)->result();
 				}
 			}
 

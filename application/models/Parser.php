@@ -491,6 +491,8 @@ class Parser extends CI_Model
 	}
 	public function get_factures_payer($date1, $date2)
 	{
+		// Parametres valides (AUDIT-001)
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2);
 		// ONLY_FULL_GROUP_BY (MySQL 8/9) : "*" remplace par les colonnes explicites en ANY_VALUE(), resultat identique
 		$this->db->select(sigco_colonnes_any_value(array('tbl_facture', 'tbl_client', 'buil', 'segment', 'compaganie'), array('nofacture', 'date'))
 			.', sum(apayer), sum(payer), sum(rabais), (sum(apayer) - sum(payer)-sum(rabais)) as balance, tbl_facture.nofacture, ANY_VALUE(tbl_facture.date) AS `date`', FALSE);
@@ -511,6 +513,10 @@ class Parser extends CI_Model
 
 	public function recherche_depot_date($date1, $date2)
 	{
+
+		// Parametres valides (AUDIT-001)
+
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2);
 
 		$this->db->select('historique_caisse.monnaie,historique_caisse.montant_hc,historique_caisse.montant_hc1,
 					segment.Date_of_arrival,buil.datenotification,compaganie.droitdepot,buil.datelivre,
@@ -548,6 +554,14 @@ class Parser extends CI_Model
 
 	public function recherche_vol_date($date1, $date2)
 	{
+
+
+
+		// Parametres valides (AUDIT-001)
+
+
+
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2);
 		$this->db->select('');
 		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
 		$this->db->order_by("Date_of_arrival", "ASC");
@@ -556,8 +570,12 @@ class Parser extends CI_Model
 		return $query->result();
 	}
 
-	public function recherche_details_de_caisse($date1, $date2)
+	public function recherche_details_de_caisse($date1, $date2, $compagnie = '')
 	{
+
+		// Parametres valides (AUDIT-001)
+
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2); $comp = sigco_id($compagnie);
 		$sql = "SELECT hc.awb, nr.num,sg.Date_of_arrival,sg.idcompagnie,sg.Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
 					 FROM norapport as nr
 					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
@@ -565,11 +583,15 @@ class Parser extends CI_Model
 					 INNER JOIN segment as sg ON (sg.id = b.segmentid)
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
 					 where nr.daterapport BETWEEN ? AND ? and b.shot = 0  and b.typeawbl='import'";
-		$query = $this->db->query($sql, array($date1, $date2));
+		$bind = array($date1, $date2);
+		if ($comp > 0) { $sql .= " AND cp.idcompagnie = ?"; $bind[] = $comp; } // filtre transporteur (Bloc 03)
+		$query = $this->db->query($sql, $bind);
 		return $query->result();
 	}
-	public function recherche_details_de_caisse2($date1, $date2)
+	public function recherche_details_de_caisse2($date1, $date2, $compagnie = '')
 	{
+		// Parametres valides (AUDIT-001)
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2); $comp = sigco_id($compagnie);
 		$sql = "SELECT hc.awb, nr.num,mn.date as Date_of_arrival,mn.flight as Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
 					 FROM norapport as nr
 					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
@@ -578,11 +600,15 @@ class Parser extends CI_Model
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie =mn.idcompagnie)
 					 INNER JOIN buil as b2 ON (b2.awbl=hc.awb)
 					 where nr.daterapport BETWEEN ? AND ? and b2.shot = 0  and b2.typeawbl='export'";
-		$query = $this->db->query($sql, array($date1, $date2));
+		$bind = array($date1, $date2);
+		if ($comp > 0) { $sql .= " AND cp.idcompagnie = ?"; $bind[] = $comp; } // filtre transporteur (Bloc 03)
+		$query = $this->db->query($sql, $bind);
 		return $query->result();
 	}
-	public function recherche_informatics_fees($date1, $date2)
+	public function recherche_informatics_fees($date1, $date2, $compagnie = '')
 	{
+		// Parametres valides (AUDIT-001)
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2); $comp = sigco_id($compagnie);
 		$sql = "SELECT hc.awb, nr.num,sg.Date_of_arrival,sg.idcompagnie,sg.Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
 					 FROM norapport as nr
 					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
@@ -590,12 +616,18 @@ class Parser extends CI_Model
 					 INNER JOIN segment as sg ON (sg.id = b.segmentid)
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
 					 where nr.daterapport BETWEEN ? AND ? and b.shot = 0 and sg.Voyage_number and hc.description='Redevance informatiques' ";
-		$query = $this->db->query($sql, array($date1, $date2));
+		$bind = array($date1, $date2);
+		if ($comp > 0) { $sql .= " AND cp.idcompagnie = ?"; $bind[] = $comp; } // filtre transporteur (Bloc 03)
+		$query = $this->db->query($sql, $bind);
 		return $query->result();
 	}
 
-	public function recherche_import_fees($date1, $date2)
+	public function recherche_import_fees($date1, $date2, $compagnie = '')
 	{
+
+		// Parametres valides (AUDIT-001)
+
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2); $comp = sigco_id($compagnie);
 		$sql = "SELECT hc.awb, nr.num,sg.Date_of_arrival,sg.idcompagnie,sg.Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
 					 FROM norapport as nr
 					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
@@ -603,11 +635,15 @@ class Parser extends CI_Model
 					 INNER JOIN segment as sg ON (sg.id = b.segmentid)
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
 					 where nr.daterapport BETWEEN ? AND ? and b.shot = 0 and hc.description='Airport Fees'";
-		$query = $this->db->query($sql, array($date1, $date2));
+		$bind = array($date1, $date2);
+		if ($comp > 0) { $sql .= " AND cp.idcompagnie = ?"; $bind[] = $comp; } // filtre transporteur (Bloc 03)
+		$query = $this->db->query($sql, $bind);
 		return $query->result();
 	}
 	public function recherche_freight($date1, $date2)
 	{
+		// Parametres valides (AUDIT-001)
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2);
 		$sql = "SELECT hc.awb, ANY_VALUE(nr.num) AS `num`, hc.monnaie, ANY_VALUE(hc.description) AS `description`, ANY_VALUE(hc.montant_hc) AS `montant_hc`, ANY_VALUE(b.prepaid) AS `prepaid`, ANY_VALUE(b.collect) AS `collect`, ANY_VALUE(b.nocharge) AS `nocharge`, SUM(hc.montant_hc) AS totalF
 					 FROM historique_caisse as hc
 					 INNER JOIN norapport as nr ON (nr.num=hc.norapport )
@@ -616,8 +652,10 @@ class Parser extends CI_Model
 		$query = $this->db->query($sql, array($date1, $date2));
 		return $query->result();
 	}
-	public function recherche_import_fees2($date1, $date2, $currency)
+	public function recherche_import_fees2($date1, $date2, $currency, $compagnie = '')
 	{
+		// Parametres valides (AUDIT-001)
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2); $currency = sigco_devise($currency); $comp = sigco_id($compagnie);
 		$sql = "SELECT hc.awb, nr.num,sg.Date_of_arrival,sg.idcompagnie,sg.Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
 					 FROM norapport as nr
 					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
@@ -625,11 +663,15 @@ class Parser extends CI_Model
 					 INNER JOIN segment as sg ON (sg.id = b.segmentid)
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
 					 where nr.daterapport BETWEEN ? AND ? and b.shot = 0 and hc.description='Airport Fees' and hc.monnaie=? ";
-		$query = $this->db->query($sql, array($date1, $date2, $currency));
+		$bind = array($date1, $date2, $currency);
+		if ($comp > 0) { $sql .= " AND cp.idcompagnie = ?"; $bind[] = $comp; } // filtre transporteur (Bloc 03)
+		$query = $this->db->query($sql, $bind);
 		return $query->result();
 	}
 	public function recherche_freight2($date1, $date2, $currency)
 	{
+		// Parametres valides (AUDIT-001)
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2); $currency = sigco_devise($currency);
 		$sql = "SELECT hc.awb, nr.num,hc.monnaie,hc.description, hc.montant_hc
 					 FROM norapport as nr
 					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
@@ -640,6 +682,8 @@ class Parser extends CI_Model
 	}
 	public function recherche_due_agent($date1, $date2, $compagnie)
 	{
+		// Parametres valides (AUDIT-001)
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2); $compagnie = sigco_id($compagnie);
 		$sql = "SELECT hc.awb, nr.num,mn.date as Date_of_arrival,mn.flight as Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
 					 FROM norapport as nr
 					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
@@ -662,6 +706,8 @@ class Parser extends CI_Model
 	}
 	public function RecherDueAgent($date1, $date2)
 	{
+		// Parametres valides (AUDIT-001)
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2);
 		$sql = "SELECT b.awb_number, mn.date, b.destination, nr.num, b.chcg, b.name_agent, hc.monnaie,hc.montant_hc,cp.compagnie,hc.description
 					 FROM norapport as nr
 					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
@@ -675,6 +721,8 @@ class Parser extends CI_Model
 	}
 	public function recherche_statistics_weight($date1, $date2, $type)
 	{
+		// Parametres valides (AUDIT-001)
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2); $type = sigco_type_awbl($type);
 		$sql = "SELECT ANY_VALUE(sg.Date_of_arrival) AS `Date_of_arrival`, ANY_VALUE(cp.compagnie) AS `compagnie`, ANY_VALUE(sg.idcompagnie) AS `idcompagnie`, ANY_VALUE(sg.Voyage_number) AS `Voyage_number`, ANY_VALUE(sg.Registration_number_of_transport_code) AS `Registration_number_of_transport_code`, ANY_VALUE(sg.Place_of_departure_code) AS `Place_of_departure_code`, sum(b.weight) as totalp
 					 FROM segment as sg
 					 INNER JOIN buil as b ON (b.segmentid=sg.id)
@@ -685,6 +733,8 @@ class Parser extends CI_Model
 	}
 	public function recherche_statistics_weight_export($date1, $date2, $type)
 	{
+		// Parametres valides (AUDIT-001)
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2); $type = sigco_type_awbl($type);
 		$sql = "SELECT ANY_VALUE(mf.date) AS `date`, ANY_VALUE(cp.compagnie) AS `compagnie`, ANY_VALUE(mf.idcompagnie) AS `idcompagnie`, ANY_VALUE(mf.flight) AS `flight`, ANY_VALUE(mf.country_loading) AS `country_loading`, sum(b.total_weight_charge) as totalp
 					 FROM manifeste as mf
 					 INNER JOIN awbl as b ON (b.id_manifeste=mf.idcompagnie)
@@ -695,6 +745,8 @@ class Parser extends CI_Model
 	}
 	public function recherche_due_agent2($date1, $date2, $currency, $comp)
 	{
+		// Parametres valides (AUDIT-001)
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2); $currency = sigco_devise($currency); $comp = sigco_id($comp);
 		$sql = "SELECT hc.awb, nr.num,mn.date as Date_of_arrival,mn.flight as Voyage_number,hc.monnaie,hc.description, hc.montant_hc, cp.compagnie
 					 FROM norapport as nr
 					 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
@@ -717,6 +769,8 @@ class Parser extends CI_Model
 	}
 	public function details_de_caisse_item_comp($date1, $date2, $comp)
 	{
+		// Parametres valides (AUDIT-001)
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2);
 		$sql = "SELECT SUM(hc.montant_hc) as total
 					FROM norapport as nr
 			 	 INNER JOIN historique_caisse as hc ON (hc.norapport = nr.num)
@@ -729,6 +783,8 @@ class Parser extends CI_Model
 	}
 	public function recherche_weekly1($date1, $date2, $type)
 	{
+		// Parametres valides (AUDIT-001)
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2); $type = sigco_type_awbl($type);
 		$sql = "SELECT ANY_VALUE(sg.Date_of_arrival) AS `Date_of_arrival`, ANY_VALUE(hc.date_hc) AS `date_hc`, ANY_VALUE(cp.compagnie) AS `compagnie`, b.awbl, ANY_VALUE(b.typeawbl) AS `typeawbl`, ANY_VALUE(b.collect) AS `collect`, ANY_VALUE(b.freight) AS `freight`, ANY_VALUE(b.remarque2) AS `remarque2`
 					 FROM buil as b
 					 INNER JOIN segment as sg ON (sg.id = b.segmentid)
@@ -740,6 +796,8 @@ class Parser extends CI_Model
 	}
 	public function recherche_weekly2($date1, $date2, $type)
 	{
+		// Parametres valides (AUDIT-001)
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2); $type = sigco_type_awbl($type);
 		$sql = "SELECT b.awbl, ANY_VALUE(b.datecreated) AS `datecreated`, ANY_VALUE(b.remarque) AS `remarque`, ANY_VALUE(fr.description) AS `description`, SUM(fr.apayer) as total
 					 FROM buil as b
 					 INNER JOIN tbl_facture as fr ON (fr.awbl = b.awbl)
@@ -749,6 +807,8 @@ class Parser extends CI_Model
 	}
 	public function recherche_commission_weight1($date1, $date2, $type)
 	{
+		// Parametres valides (AUDIT-001)
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2); $type = sigco_type_awbl($type);
 		$sql = "SELECT ANY_VALUE(sg.Date_of_arrival) AS `Date_of_arrival`, ANY_VALUE(sg.Place_of_departure_code) AS `Place_of_departure_code`, ANY_VALUE(cp.compagnie) AS `compagnie`, b.awbl, ANY_VALUE(b.typeawbl) AS `typeawbl`, ANY_VALUE(b.weight_charge) AS `weight_charge`, ANY_VALUE(b.remarque2) AS `remarque2`
 					 FROM buil as b
 					 INNER JOIN segment as sg ON (sg.id = b.segmentid)
@@ -759,6 +819,8 @@ class Parser extends CI_Model
 	}
 	public function recherche_commission_weight2($date1, $date2)
 	{
+		// Parametres valides (AUDIT-001)
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2);
 		// 	$sql = "SELECT b.awb_number,b.datecreated,b.route_to2,b.route_to3,b.wt_val,oh.description,oh.amount,ba.remarque
 		// 	 FROM awbl as b
 		// 	 INNER JOIN tbl_other_charges as oh ON (oh.id_other = b.awb_number)
@@ -781,6 +843,8 @@ class Parser extends CI_Model
 	}
 	public function recherche_commission_fees1($date1, $date2, $type)
 	{
+		// Parametres valides (AUDIT-001)
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2); $type = sigco_type_awbl($type);
 		$sql = "SELECT sg.Date_of_arrival,sg.Voyage_number,sg.Registration_number_of_transport_code,cp.compagnie,sg.id
 					 FROM segment as sg
 					 INNER JOIN compaganie as cp ON (cp.idcompagnie = sg.idcompagnie)
@@ -1662,6 +1726,8 @@ class Parser extends CI_Model
 	}
 	public function recherche_livraison_date($date1, $date2)
 	{
+		// Parametres valides (AUDIT-001)
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2);
 		$this->db->select('');
 		$this->db->join('segment', 'segment.id=buil.segmentid', 'inner');
 		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
@@ -1674,6 +1740,8 @@ class Parser extends CI_Model
 	}
 	public function recherche_livraison_date2($date1, $date2)
 	{
+		// Parametres valides (AUDIT-001)
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2);
 		$this->db->select('');
 		$this->db->join('buil', 'buil.awbl=degroupage.idbuil', 'inner');
 		$this->db->join('segment', 'segment.id=buil.segmentid', 'inner');
@@ -1688,6 +1756,8 @@ class Parser extends CI_Model
 	}
 	public function recherche_non_livraison_date($date1, $date2)
 	{
+		// Parametres valides (AUDIT-001)
+		$date1 = sigco_date($date1); $date2 = sigco_date($date2);
 		$this->db->select('');
 		$this->db->join('segment', 'segment.id=buil.segmentid', 'inner');
 		$this->db->join('compaganie', 'compaganie.idcompagnie = segment.idcompagnie', 'inner');
@@ -1833,6 +1903,42 @@ class Parser extends CI_Model
 
 
 	// pour la pagination
+
+	/**
+	 * Recherche de facturation paginee cote serveur : meme filtre et meme tri que getData(),
+	 * qui renvoyait toutes les lignes (une recherche "1" produisait une page de 100 Mo).
+	 */
+	/** Recherche AWB (Recherche::larecherche) paginee : meme filtre que recherche_total(). */
+	public function recherche_total_compter($flight)
+	{
+		$sql = "SELECT COUNT(*) AS n FROM buil WHERE (awbl LIKE ?)";
+		return (int) $this->db->query($sql, array('%'.$flight.'%'))->row()->n;
+	}
+
+	public function recherche_total_page($flight, $limit, $offset)
+	{
+		$sql = "SELECT awbl,indice,notify_code,notify_name,notify_adress,qty,qtytotal,package,weight,consignee,freight,weight_charge,currency,datecreated,datenotification,status,segmentid,prepaid,collect,nocharge,remarque,datelivre,livrepar,recupar,nif,nolivraison,typeawbl FROM buil  WHERE (awbl LIKE ?) ORDER BY id LIMIT " . (int) $offset . ", " . (int) $limit;
+		return $this->db->query($sql, array('%'.$flight.'%'))->result();
+	}
+
+	private function _filtre_recherche_facturation($st)
+	{
+		if ($st === NULL || $st == "NIL") $st = "";
+		if ($st == 'f' || $st == 'rech') $st = 0;
+		return '%'.$st.'%';
+	}
+
+	public function compter_recherche_facturation($st)
+	{
+		$sql = "SELECT COUNT(*) AS n FROM buil WHERE (awbl LIKE ?)";
+		return (int) $this->db->query($sql, array($this->_filtre_recherche_facturation($st)))->row()->n;
+	}
+
+	public function recherche_facturation_page($st, $limit, $offset)
+	{
+		$sql = "SELECT awbl,indice,notify_code,notify_name,notify_adress,qty,qtytotal,package,weight,consignee,freight,weight_charge,currency,datecreated,datenotification,status,segmentid,prepaid,collect,nocharge,remarque,datelivre,livrepar,recupar,nif,nolivraison,shot,void,typeawbl FROM buil  WHERE (awbl LIKE?) ORDER BY  awbl ASC, id ASC LIMIT " . (int) $offset . ", " . (int) $limit;
+		return $this->db->query($sql, array($this->_filtre_recherche_facturation($st)))->result();
+	}
 
 	public function getData($limit, $start, $st = NULL)
 	{

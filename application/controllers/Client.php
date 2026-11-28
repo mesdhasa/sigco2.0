@@ -31,7 +31,7 @@ class Client extends MY_Controller {
 			// $data['lessegments']= 	$this->Parser->get_segments();
 			// Pagination serveur + recherche (AUDIT-018)
 			$data['recherche'] = trim((string) $this->input->get('q'));
-			$data['pagination'] = sigco_pagination($this->Parser->count_clients($data['recherche']), 50);
+			$data['pagination'] = sigco_pagination($this->Parser->count_clients($data['recherche']));
 			$data['lesclients'] = $this->Parser->get_clients_page($data['pagination']['par_page'], $data['pagination']['offset'], $data['recherche']);
 			$this->load->view('listeclient',$data);
 		}

@@ -33,8 +33,15 @@ class Recherche extends MY_Controller {
 			redirect('login');
 		}
 		    $data['act']	=	$this->uri->segment(3);
+			// Pagination serveur (une recherche large renvoyait 50 000 lignes, 54 Mo) ;
+			// la valeur cherchee est gardee en session pour les liens de pages.
 			if(isset($_POST['custum'])){
-				$data['lessegments']= 	$this->Parser->recherche_total($_POST['custum']);
+				$this->session->set_userdata('sigco_rech_awb', (string) $_POST['custum']);
+			}
+			$critere = $this->session->userdata('sigco_rech_awb');
+			if(isset($_POST['custum']) || ($critere !== NULL && ($this->input->get('page') !== NULL || $this->input->get('par_page') !== NULL))){
+				$data['pagination'] = sigco_pagination($this->Parser->recherche_total_compter($critere));
+				$data['lessegments']= 	$this->Parser->recherche_total_page($critere, $data['pagination']['par_page'], $data['pagination']['offset']);
 			}else{
 				$data['lessegments']= 	array();
 			}

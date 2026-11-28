@@ -144,6 +144,24 @@
 							</li>
 						<?php }?>
 
+						<?php if(isset($_SESSION['droit']['a40']) and $_SESSION['droit']['a40']=="1"){?>
+						<li class="<?php if(isset($y) and $y=="points") echo "active";?>">
+							<a href="<?php echo base_url()?>points-de-chargement">
+								<i class="menu-icon fa fa-caret-left"></i>
+						Points de chargement
+							</a>
+							<b class="arrow"></b>
+						</li>
+						<?php }?>
+						<?php if(isset($_SESSION['droit']['a41']) and $_SESSION['droit']['a41']=="1"){?>
+						<li class="<?php if(isset($y) and $y=="archives") echo "active";?>">
+							<a href="<?php echo base_url()?>archives-awb">
+								<i class="menu-icon fa fa-caret-left"></i>
+						Archives AWB
+							</a>
+							<b class="arrow"></b>
+						</li>
+						<?php }?>
 						</ul>
 					</li>
 							<?php }?>

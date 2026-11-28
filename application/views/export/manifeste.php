@@ -64,6 +64,19 @@ CARGO MANIFEST
                      </div>
                    </div>
                 <div class="form-group">
+                      <label class="control-label col-sm-3" for="point_of_loading"><strong>Point of Loading:</strong></label>
+                      <div class="col-sm-9">
+                        <select class="form-control" id="point_of_loading" name="point_of_loading">
+                        <?php foreach((isset($points) ? $points : array()) as $pt){ ?>
+                        <option value="<?php echo e($pt->code)?>"<?php echo (strtoupper($pt->code)==='PAP'?' selected':'')?>><?php echo e($pt->code.' - '.$pt->nom)?></option>
+                        <?php } ?>
+                        </select>
+                        <?php if(isset($_SESSION['droit']['a40']) and $_SESSION['droit']['a40']=="1"){?>
+                        <a href="<?php echo base_url()?>points-de-chargement" class="btn btn-xs btn-link"><i class="fa fa-plus"></i> Gerer les villes de depart</a>
+                        <?php }?>
+                      </div>
+                    </div>
+                <div class="form-group">
                       <label class="control-label col-sm-3" for="country_loading"><strong>Country Loading:</strong></label>
                       <div class="col-sm-9">
                         <input type="text" class="form-control" id="country_loading" placeholder="HTPAP" name="country_loading" value="HTPAP" disabled>

@@ -14,6 +14,10 @@ if($this->session->flashdata('sms')){
   <strong><?php echo $this->session->flashdata('sms');?></strong>
 </div>
 <?php } ?>
+						<p class="text-muted" style="text-align:right; margin:0 0 4px">
+							<small id="tdb-etat" style="display:none"><i class="fa fa-refresh fa-spin"></i> Mise &agrave; jour des indicateurs&hellip;</small>
+							<?php if ( ! empty($tdb_calcule_le)) { ?><small>Indicateurs calcul&eacute;s &agrave; <?php echo date('H:i', $tdb_calcule_le); ?></small><?php } ?>
+						</p>
 						<div class="row">
 
 
@@ -40,7 +44,7 @@ if($this->session->flashdata('sms')){
 			<div class="col-lg-3 col-md-6 col-sm-12">
 				<div style="width: 100%; border:solid 1px #cccccc; padding:3px; margin-bottom:5px; min-height:260px;">
 					<div style="text-align:center"><h4>Collect / Pre-paid / No charge</h4>
-					<p style="text-align:center; font-size:18px; font-weight:bold"><?php echo $t;?> colis</p>
+					<p style="text-align:center; font-size:18px; font-weight:bold"><span id="tdb-stock"><?php echo $t;?></span> colis</p>
 
 					</div>
 					<div id="canvas-holder2" style="width:87%">
@@ -220,5 +224,19 @@ var randomScalingFactor = function() {
 		var ctx5 = document.getElementById("chart-area5").getContext("2d");
         window.myPie = new Chart(ctx5, config);
 
+		// Compteurs perimes ou absents : recalcul en arriere-plan puis mise a jour des graphiques
+		<?php if ( ! empty($tdb_a_rafraichir)) { ?>
+		var etat = document.getElementById('tdb-etat');
+		if (etat) { etat.style.display = 'inline'; }
+		jQuery.getJSON('<?php echo base_url('home/compteurs'); ?>', function (c) {
+			config.data.datasets[0].data  = [c.awblimport, c.awblexport];
+			config2.data.datasets[0].data = [c.awblnonlivre, c.awblretard];
+			config3.data.datasets[0].data = [c.awblcc, c.awblpp, c.awblnc, c.awblnone];
+			config4.data.datasets[0].data = [c.impayee, c.duedate];
+			jQuery.each(Chart.instances, function (i, g) { g.update(); });
+			jQuery('#tdb-stock').text(c.stock_total);
+			if (etat) { etat.style.display = 'none'; }
+		});
+		<?php } ?>
     };
 </script>

@@ -16,7 +16,6 @@ class Facture extends MY_Controller {
 		'Rembourser_facture' => 'a19',
 		'deleteFacture_payer' => 'a19',
 		'description_pmt' => 'a19',
-		'degroup' => 'a19',
 		'caissepdf_usd' => array('a15', 'a19'),
 		'caissepdf_htg' => array('a15', 'a19'),
 		'imprimerecu' => array('a15', 'a19'),
@@ -69,7 +68,8 @@ $val = $this->session->userdata('sesnumber');
 
 $data['act']		='f';
 $data['y']			='rech';
-$data['lessegments']= 	$this->Parser->get_awblFacture($val);
+// Sans recherche, get_awblFacture('') renvoyait les 51 000 AWBL (non affiches par la vue)
+$data['lessegments']= 	($val === '') ? array() : $this->Parser->get_awblFacture($val);
 $this->session->client = "";
 $data['data']= 	0;
 // $data['data']=$this->page->loadpage('getData2','Parser','facture/index',0,'getDataCount');
@@ -96,10 +96,19 @@ $val = $this->session->userdata('sesnumber');
 
 $data['act']		='f';
 $data['y']			='rech';
-$data['lessegments']= 	$this->Parser->get_awblFacture($val);
+// lessegments n'est pas utilise par la vue facturation : inutile de charger des milliers d'AWBL
+$data['lessegments']= 	array();
 $this->session->client = "";
-$getDataCountBy=$this->Parser->getDataCountBy($this->input->post('noawbl'));
-$data['data']=$this->page->search('noawbl',null,'facture','Parser',1,'getData',$getDataCountBy);
+// Pagination serveur (100 lignes par defaut, choix 200/500/1000) : la recherche renvoyait
+// toutes les lignes (ex. "1" -> 84 000 lignes, 100 Mo). La valeur cherchee est gardee en
+// session pour que les liens de pages (GET) refassent la meme recherche.
+$pagination = sigco_pagination($this->Parser->compter_recherche_facturation($val));
+$data['data'] = array(
+	'data'       => $this->Parser->recherche_facturation_page($val, $pagination['par_page'], $pagination['offset']),
+	'page'       => $pagination['page'],
+	'pagination' => $pagination['liens'],
+	'sigco'      => $pagination,
+);
 $this->load->view('facturation',$data);
 }
 public function degrouper()
@@ -965,8 +974,15 @@ redirect('login');
 $data['act']			=	$this->uri->segment(3);
 $data['y']				=	$this->uri->segment(4);
 // Pagination serveur (AUDIT-011/018) : 9 350 factures n'etaient plus affichables en une page
-$numeros = $this->Parser->numeros_factures_impayees();
-$data['pagination'] = sigco_pagination(count($numeros), 50);
+// Liste en cache tant qu'aucune ecriture n'a eu lieu (30 min au plus) : pas de recalcul a chaque page
+$cache = sigco_cache_lire('factures_impayees', 1800);
+if ($cache && $cache['a_jour']) {
+	$numeros = $cache['donnees'];
+} else {
+	$numeros = $this->Parser->numeros_factures_impayees();
+	sigco_cache_ecrire('factures_impayees', $numeros);
+}
+$data['pagination'] = sigco_pagination(count($numeros));
 $data['lesfactures']	= 	$this->Parser->get_factures_page(array_slice($numeros, $data['pagination']['offset'], $data['pagination']['par_page']));
 $this->load->view('rapportFacture',$data);
 }
@@ -991,6 +1007,8 @@ $_POST['date1']= "";
 $_POST['date2']= "";
 $data['lessegments']= 	array();
 $data['lessegments2']= 	array();
+$data['compagnie']	=	$this->Parser->get_compagnie();
+$data['compagnie_choisie']	=	'';
 $data['act']			=	$this->uri->segment(3);
 $data['y']				=	$this->uri->segment(4);
 $this->load->view('details_de_caisse',$data);
@@ -1003,11 +1021,14 @@ redirect('login');
 }
 $data['lessegments']= 	array();
 $data['lessegments2']= 	array();
+$data['compagnie']	=	$this->Parser->get_compagnie();
+$compagnie	=	$this->input->post('compagnie');
+$data['compagnie_choisie']	=	$compagnie;
 $data['act']	=	$this->uri->segment(3);
 $data['y']		=	$this->uri->segment(4);
 if(!empty($_POST['date1']) && !empty($_POST['date2']) ){
-$data['lessegments']= 	$this->Parser->recherche_details_de_caisse(chaineVersDate($_POST['date1']),chaineVersDate($_POST['date2']));
-$data['lessegments2']= 	$this->Parser->recherche_details_de_caisse2(chaineVersDate($_POST['date1']),chaineVersDate($_POST['date2']));
+$data['lessegments']= 	$this->Parser->recherche_details_de_caisse(chaineVersDate($_POST['date1']),chaineVersDate($_POST['date2']),$compagnie);
+$data['lessegments2']= 	$this->Parser->recherche_details_de_caisse2(chaineVersDate($_POST['date1']),chaineVersDate($_POST['date2']),$compagnie);
 $this->session->no = chaineVersDate($_POST['date1']);
 $this->session->no = chaineVersDate($_POST['date2']);
 }
@@ -1023,9 +1044,10 @@ redirect('login');
 $this->load->library('Pdf');
 $date1 =	$this->uri->segment(3);
 $date2 =	$this->uri->segment(4);
+$compagnie =	$this->uri->segment(5); // filtre transporteur (Bloc 03), 0 = tous
 $data['compagnie']	= 	$this->Parser->get_compagnie();
-$data['lessegments']= 	$this->Parser->recherche_details_de_caisse($date1,$date2);
-$data['lessegments2']= 	$this->Parser->recherche_details_de_caisse2($date1,$date2);
+$data['lessegments']= 	$this->Parser->recherche_details_de_caisse($date1,$date2,$compagnie);
+$data['lessegments2']= 	$this->Parser->recherche_details_de_caisse2($date1,$date2,$compagnie);
 $this->load->view('pdf/details_de_caisse_pdf',$data);
 }
 public function informatics_fees()
@@ -1036,6 +1058,8 @@ redirect('login');
 $_POST['date1']= "";
 $_POST['date2']= "";
 $data['lessegments']= 	array();
+$data['compagnie']	=	$this->Parser->get_compagnie();
+$data['compagnie_choisie']	=	'';
 $data['act']			=	$this->uri->segment(3);
 $data['y']				=	$this->uri->segment(4);
 
@@ -1047,10 +1071,13 @@ if($_SESSION['account']['code'] == ""){
 redirect('login');
 }
 $data['lessegments']= 	array();
+$data['compagnie']	=	$this->Parser->get_compagnie();
+$compagnie	=	$this->input->post('compagnie');
+$data['compagnie_choisie']	=	$compagnie;
 $data['act']	=	$this->uri->segment(3);
 $data['y']		=	$this->uri->segment(4);
 if(!empty($_POST['date1']) && !empty($_POST['date2'])){
-$data['lessegments']= 	$this->Parser->recherche_informatics_fees(chaineVersDate($_POST['date1']),chaineVersDate($_POST['date2']));
+$data['lessegments']= 	$this->Parser->recherche_informatics_fees(chaineVersDate($_POST['date1']),chaineVersDate($_POST['date2']),$compagnie);
 }
 
 $this->load->view('informatics_fees',$data);
@@ -1063,7 +1090,7 @@ redirect('login');
 $this->load->library('Pdf');
 $date1 =	$this->uri->segment(3);
 $date2 =	$this->uri->segment(4);
-$custum =	$this->uri->segment(5);
+$custum =	$this->uri->segment(5); // filtre transporteur (Bloc 03), 0 = tous
 $data['lessegments']= 	$this->Parser->recherche_informatics_fees($date1,$date2,$custum);
 $this->load->view('pdf/informatics_fees_pdf',$data);
 }
@@ -1075,6 +1102,8 @@ redirect('login');
 $_POST['date1']= "";
 $_POST['date2']= "";
 $data['lessegments']= 	array();
+$data['compagnie']	=	$this->Parser->get_compagnie();
+$data['compagnie_choisie']	=	'';
 $data['act']			=	$this->uri->segment(3);
 $data['y']				=	$this->uri->segment(4);
 
@@ -1086,10 +1115,13 @@ if($_SESSION['account']['code'] == ""){
 redirect('login');
 }
 $data['lessegments']= 	array();
+$data['compagnie']	=	$this->Parser->get_compagnie();
+$compagnie	=	$this->input->post('compagnie');
+$data['compagnie_choisie']	=	$compagnie;
 $data['act']	=	$this->uri->segment(3);
 $data['y']		=	$this->uri->segment(4);
 if(!empty($_POST['date1']) && !empty($_POST['date2']) ){
-$data['lessegments']= 	$this->Parser->recherche_import_fees(chaineVersDate($_POST['date1']),chaineVersDate($_POST['date2']));
+$data['lessegments']= 	$this->Parser->recherche_import_fees(chaineVersDate($_POST['date1']),chaineVersDate($_POST['date2']),$compagnie);
 $this->session->no = chaineVersDate($_POST['date1']);
 $this->session->no = chaineVersDate($_POST['date2']);
 }
@@ -1105,8 +1137,9 @@ $this->load->library('Pdf');
 $currency	= $this->uri->segment(3);
 $date1 =	$this->uri->segment(4);
 $date2 =	$this->uri->segment(5);
+$compagnie =	$this->uri->segment(6); // filtre transporteur (Bloc 03), 0 = tous
 $data['compagnie']	= 	$this->Parser->get_compagnie();
-$data['lessegments']= 	$this->Parser->recherche_import_fees2($date1,$date2,$currency);
+$data['lessegments']= 	$this->Parser->recherche_import_fees2($date1,$date2,$currency,$compagnie);
 
 $this->load->view('pdf/import_fees_pdf',$data);
 }

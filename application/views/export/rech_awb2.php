@@ -86,7 +86,8 @@ if (!empty($nowh)) {
               <div class="col-lg-12 col-md-12 col-xs-12">
 			  <hr />
               <div class="table-responsive">
-                <table class="table table-striped table-condensed table-bordered table-hover">
+                <?php if (isset($sigco_pag) && is_array($sigco_pag)) { ?><div class="sigco-pagination-barre"><?php echo $sigco_pag['selecteur']; ?> <span class="text-muted"><?php echo (int) $sigco_pag['total']; ?> r&eacute;sultat(s) &ndash; page <?php echo (int) $sigco_pag['page']; ?> / <?php echo (int) $sigco_pag['pages']; ?></span> <?php echo $sigco_pag['liens']; ?></div><?php } ?>
+<table data-sigco-pagination="serveur" class="table table-striped table-condensed table-bordered table-hover">
                     <thead>
                       <tr>
                     <th></th>
@@ -102,7 +103,7 @@ if (!empty($nowh)) {
                     <tbody>
                       <?php
                       if(count($leswarehouse)>0){
-                      $r=0;foreach($leswarehouse as $row){$r++;
+                      $r = (isset($sigco_pag) && is_array($sigco_pag)) ? $sigco_pag['offset'] : 0;foreach($leswarehouse as $row){$r++;
 
                         ?>
 												<?php if($row->void=="1"){?>
@@ -141,6 +142,7 @@ if (!empty($nowh)) {
 
                     </tbody>
                   </table>
+<?php if (isset($sigco_pag) && is_array($sigco_pag)) { ?><div class="sigco-pagination-barre"><?php echo $sigco_pag['liens']; ?></div><?php } ?>
                 </div>
               </div>
 
